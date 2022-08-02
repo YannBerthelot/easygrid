@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "easygrid"
-version = "0.1.0"
+version = "0.1.1"
 description = "Gym environment of simple microgrid simulation for Reinforcement Learning"
 authors = ["YANN BERTHELOT <yannberthelot1@gmail.com>"]
 readme = "README.md"
@@ -14,6 +14,7 @@ gym = "^0.25.1"
 pytest = "^5.2"
 pre-commit = "^2.20.0"
 scriv = "^0.16.0"
+tox = "^3.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
