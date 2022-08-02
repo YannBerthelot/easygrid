@@ -1,7 +1,8 @@
 import gym
-from gym import spaces
 
 from easygrid.microgrid import Microgrid
+
+# from gym import spaces
 
 
 class GridEnv(gym.Env):
@@ -9,24 +10,22 @@ class GridEnv(gym.Env):
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, arg1, arg2):
-        super(GridEnv, self).__init__()
-        self.microgrid = Microgrid()
+    def __init__(self, config):
+        super().__init__()
+        self.microgrid = Microgrid(config)
         # Define action and observation space
         # They must be gym.spaces objects
         # Example when using discrete actions:
-        self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
-        # Example for using image as input:
-        self.observation_space = spaces.Box(
-            low=0, high=255, shape=(HEIGHT, WIDTH, N_CHANNELS), dtype=np.uint8
-        )
+        # self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
+        # # Example for using image as input:
+        # self.observation_space = spaces.Box(
+        # )
 
     def step(self, action):
         self.microgrid.run_timestep(action)
-        raise NotImplementedError
         # return observation, reward, done, info
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         raise NotImplementedError
         # return observation  # reward, done, info can't be included
 
