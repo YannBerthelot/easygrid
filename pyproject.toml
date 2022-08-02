@@ -13,9 +13,13 @@ gym = "^0.25.1"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 pre-commit = "^2.20.0"
-scriv = "^0.16.0"
+scriv = {extras = ["toml"], version = "^0.15.2"}
 tox = "^3.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.scriv]
+format = "md"
+version = "literal: src/extendedjson/__init__.py: __version__"
