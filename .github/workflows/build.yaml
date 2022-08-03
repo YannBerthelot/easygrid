@@ -30,8 +30,6 @@ jobs:
       - name: Run tox
         run: |
           tox
-          ls /home/runner/work/easygrid/easygrid/.tox/py38
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
