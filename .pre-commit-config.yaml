@@ -33,3 +33,4 @@ repos:
     hooks:
       - id: pylint
         exclude: tests/ # Prevent files in tests/ to be passed in to pylint.
+        args: ["--rcfile=.pylintrc"] # Link to your config file
