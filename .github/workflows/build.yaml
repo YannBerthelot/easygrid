@@ -28,7 +28,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
       - name: Run tox
-        run: tox
+        run: |
+          tox
+          ls /home/runner/work/easygrid/
+          ls /home/runner/work/easygrid/easygrid
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
