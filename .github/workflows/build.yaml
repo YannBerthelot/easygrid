@@ -30,6 +30,7 @@ jobs:
       - name: Run tox
         run: |
           tox
+          find . -name "coverage.xml" -type f
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
