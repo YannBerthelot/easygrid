@@ -37,3 +37,4 @@ jobs:
           fail_ci_if_error: true # optional (default = false)
           verbose: true # optional (default = false)
           version: "v0.1.15"
+          file: /home/runner/work/easygrid/easygrid/.tox/coverage
