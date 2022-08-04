@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "easygrid"
-version = "0.1.1"
+version = "0.1.2"
 description = "Gym environment of simple microgrid simulation for Reinforcement Learning"
 authors = ["YANN BERTHELOT <yannberthelot1@gmail.com>"]
 readme = "README.md"
@@ -27,4 +27,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.scriv]
 format = "md"
-version = "literal: src/extendedjson/__init__.py: __version__"
+version = "literal: src/easygrid/__init__.py: __version__"
