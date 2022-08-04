@@ -31,3 +31,4 @@ jobs:
 
       - name: Build and publish
         run: poetry publish -r testpypi --build
+

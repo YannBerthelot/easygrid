@@ -30,6 +30,7 @@ jobs:
       - name: Run tox
         run: |
           tox
+          find . -name "coverage.xml" -type f
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -37,4 +38,5 @@ jobs:
           fail_ci_if_error: true # optional (default = false)
           verbose: true # optional (default = false)
           version: "v0.1.15"
-          file: /home/runner/work/easygrid/easygrid/.tox/coverage
+          files: ./coverage.xml
+

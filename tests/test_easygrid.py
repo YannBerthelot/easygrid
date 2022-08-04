@@ -1,6 +1,5 @@
 import pytest
 
-from easygrid import __version__
 from easygrid.env import GridEnv
 from easygrid.microgrid import Action
 
@@ -26,7 +25,3 @@ def test_env():
         env.render()
     with pytest.raises(NotImplementedError):
         env.close()
-
-
-def test_version():
-    assert __version__ == "0.1.0"
