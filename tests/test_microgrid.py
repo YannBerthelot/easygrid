@@ -15,10 +15,9 @@ action: Action = {"battery": 1000, "grid": 1000}
 
 
 def test_microgrid():
-    config = {"BATTERY": battery_config}
+    config = {"BATTERY": battery_config, "MICROGRID": {"MAX_TIMESTEP": 1e3}}
     mg = Microgrid(config)
-    with pytest.raises(NotImplementedError):
-        mg.run_timestep(action)
+    mg.run_timestep(action)
     with pytest.raises(NotImplementedError):
         mg.print_info()
     with pytest.raises(NotImplementedError):
@@ -27,14 +26,20 @@ def test_microgrid():
 
 def test_battery():
     battery = Battery(battery_config)
-    battery.charge(1000)
-    battery.discharge(1000)
-    with pytest.raises(ValueError):
-        battery.charge(-1000)
-    with pytest.raises(ValueError):
-        battery.discharge(-1000)
-    battery.process_action(action["battery"])
-    battery.process_action(-action["battery"])
+    battery.charge_discharge(1000)
+    battery.charge_discharge(-1000)
+    assert (
+        isinstance(battery.state_of_charge, float)
+        and (battery.state_of_charge >= 0)
+        and (battery.state_of_charge <= 1)
+    )
+    battery.charge_discharge(1e8)
+    assert (
+        isinstance(battery.state_of_charge, float)
+        and (battery.state_of_charge >= 0)
+        and (battery.state_of_charge <= 1)
+    )
+    battery.charge_discharge(-2e8)
     assert (
         isinstance(battery.state_of_charge, float)
         and (battery.state_of_charge >= 0)

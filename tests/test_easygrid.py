@@ -13,14 +13,13 @@ battery_config = {
     "min_output": 20,
     "initial_energy": 0.2 * CAPACITY,
 }
-config = {"BATTERY": battery_config}
+config = {"BATTERY": battery_config, "MICROGRID": {"MAX_TIMESTEP": 1e3}}
 action: Action = {"battery": 1000, "grid": 1000}
 
 
 def test_env():
     env = GridEnv(config)
-    with pytest.raises(NotImplementedError):
-        env.step(action)
+    env.step(action)
     with pytest.raises(NotImplementedError):
         env.reset()
     with pytest.raises(NotImplementedError):
