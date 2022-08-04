@@ -1,1 +1,4 @@
-__version__ = '0.1.0'
+"""
+Easygrid
+"""
+__version__ = "0.1.2"
