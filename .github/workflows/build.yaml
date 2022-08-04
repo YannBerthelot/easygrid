@@ -38,4 +38,4 @@ jobs:
           fail_ci_if_error: true # optional (default = false)
           verbose: true # optional (default = false)
           version: "v0.1.15"
-          files: /home/runner/work/easygrid/easygrid/.tox/coverage.xml
+          files: ./coverage.xml
