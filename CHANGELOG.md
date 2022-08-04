@@ -4,6 +4,17 @@
 
 ## Added
 
+- Added CI for automatic publication to Test PyPi
+
+## Fixed
+
+- Fixed Coverage support on CI github actions
+
+<a id='changelog-0.1.2'></a>
+# 0.1.2 — 2022-08-04
+
+## Added
+
 - Added pylint config to the repo for easier consistency between CI and local env.
 - Docstrings for Microgrid and Battery
 - Added reward function template
