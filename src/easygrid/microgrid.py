@@ -2,11 +2,11 @@
 This module creates thhe microgrid object
 """
 
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 
-from easygrid.types import Action, BatteryConfig, GridConfig
+from easygrid.types import Action, BatteryConfig, GridConfig, PvConfig
 
 
 class Microgrid:
@@ -210,6 +210,10 @@ class Grid:
         The timeserie for import prices (one price per timestep)
     export_prices : List[float]
         The timeserie for export prices (one price per timestep)
+    import_prices_factor : float
+        A scaling factor to easily modify the import prices.
+    export_prices_factor : float
+        A scaling factor to easily modify the export prices.
     __len__ (property) : int
         The length of timeseries for safety checks
 
@@ -226,8 +230,10 @@ class Grid:
         Args:
             grid_config (GridConfig): Configuration for the grid.
         """
-        self.import_prices = grid_config["import_prices"]
-        self.export_prices = grid_config["export_prices"]
+        self.import_prices_ = grid_config["import_prices"]
+        self.export_prices_ = grid_config["export_prices"]
+        self.import_price_factor = 1
+        self.export_price_factor = 1
         if len(self.import_prices) != len(self.export_prices):
             raise ValueError(
                 f"Price timeseries are not of the same length \
@@ -259,6 +265,82 @@ class Grid:
             int: The length of prices series for safety checks
         """
         return len(self.import_prices)
+
+    @property
+    def import_prices(self) -> Union[List[float], np.ndarray]:
+        """
+        Returns:
+            int: The length of prices series for safety checks
+        """
+        return self.import_prices_ * self.import_price_factor
+
+    @property
+    def export_prices(self) -> Union[List[float], np.ndarray]:
+        """
+        Returns:
+            int: The length of prices series for safety checks
+        """
+        return self.export_prices_ * self.export_price_factor
+
+
+class Photovoltaic:
+    """
+    Models the photovoltaic local production
+    ...
+
+    Attributes
+    ----------
+    import_prices : List[float]
+        The timeserie for pv_production prices (energy produced per timestep).
+    production_factor : float
+        A scaling factor to easily modify the pv production.
+    __len__ (property) : int
+        The length of timeseries for safety checks.
+
+    Methods
+    -------
+    get_cost : Get the running cost for a given timestep and energy to be \
+        bought/sold
+    """
+
+    def __init__(self, pv_config: PvConfig) -> None:
+        """
+        Creates the relevant attributes based on the config
+
+        Args:
+            pv_config (PvConfig): Configuration for the PV.
+        """
+        self.pv_production_ts_ = pv_config["PV_config"]
+        self.production_factor = 1
+
+    @property
+    def pv_production_ts(self) -> Union[List[float], np.ndarray]:
+        """
+        Returns:
+            Union[List[float], np.ndarray]: The production timeserie rescaled.
+        """
+        return self.pv_production_ts_ * self.production_factor
+
+    @property
+    def __len__(self) -> int:
+        """
+        Returns:
+            int: The length of pv production serie for safety checks
+        """
+        return len(self.pv_production_ts_)
+
+    def get_power(self, t: int) -> float:
+        """
+        Method to get the power produced for the given timestep.\
+            Not really interesting, it exists for an easier framework.
+
+        Args:
+            t (int): the timestep for which to return power
+
+        Returns:
+            float: the corresponding produced photovoltaic power.
+        """
+        return self.pv_production_ts[t]
 
 
 # class Load:

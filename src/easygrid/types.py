@@ -37,3 +37,12 @@ class GridConfig(TypedDict):
 
     import_prices: Union[List[float], np.ndarray]
     export_prices: Union[List[float], np.ndarray]
+
+
+class PvConfig(TypedDict):
+    """
+    This TypedDict represents the pv panel config template to be fed \
+        to the microgrid
+    """
+
+    pv_prouction_ts: Union[List[float], np.ndarray]
