@@ -2,32 +2,11 @@
 This module creates thhe microgrid object
 """
 
-from typing import Tuple, TypedDict
+from typing import Tuple
 
 import numpy as np
 
-
-class Action(TypedDict):
-    """
-    This TypedDict represents the action template to be fed to the microgrid
-    """
-
-    battery: float
-    grid: float
-
-
-class BatteryConfig(TypedDict):
-    """
-    This TypedDict represents the battery config template to be fed \
-        to the microgrid
-    """
-
-    capacity: float
-    high_capacity: float
-    low_capacity: float
-    max_output: float
-    min_output: float
-    initial_energy: float
+from easygrid.types import Action, BatteryConfig, GridConfig
 
 
 class Microgrid:
@@ -56,10 +35,19 @@ class Microgrid:
             config (dict): Configuration for the underlying microgrid.
         """
         battery_config: BatteryConfig = config["BATTERY"]
+        grid_config: GridConfig = config["GRID"]
+
         self.battery = Battery(battery_config)
+        self.grid = Grid(grid_config)
+
         self.t = 0
         self.MAX_TIMESTEP = config["MICROGRID"]["MAX_TIMESTEP"]
-        # self.grid = Grid()
+
+        if self.grid.__len__ < self.MAX_TIMESTEP:
+            raise ValueError(
+                f"Prices timeseries are shorter ({self.grid.__len__ }) than \
+                    the maximum number of timesteps ({self.MAX_TIMESTEP})"
+            )
         # self.load = Load()
 
     def run_timestep(self, action: Action) -> Tuple[np.ndarray, bool]:
@@ -154,7 +142,7 @@ class Battery:
         Creates the relevant attributes based on the config
 
         Args:
-            battery_config (dict): Configuration for the battery.
+            battery_config (BatteryConfig): Configuration for the battery.
         """
         self.capacity = battery_config["capacity"]
         self.high_capacity = battery_config["high_capacity"]
@@ -211,9 +199,66 @@ class Battery:
             return undercharge
 
 
-# class Grid:
-#     def __init__(self) -> None:
-#         pass
+class Grid:
+    """
+    Models the grid, its costs and prices
+    ...
+
+    Attributes
+    ----------
+    import_prices : List[float]
+        The timeserie for import prices (one price per timestep)
+    export_prices : List[float]
+        The timeserie for export prices (one price per timestep)
+    __len__ (property) : int
+        The length of timeseries for safety checks
+
+    Methods
+    -------
+    get_cost : Get the running cost for a given timestep and energy to be \
+        bought/sold
+    """
+
+    def __init__(self, grid_config: GridConfig) -> None:
+        """
+        Creates the relevant attributes based on the config
+
+        Args:
+            grid_config (GridConfig): Configuration for the grid.
+        """
+        self.import_prices = grid_config["import_prices"]
+        self.export_prices = grid_config["export_prices"]
+        if len(self.import_prices) != len(self.export_prices):
+            raise ValueError(
+                f"Price timeseries are not of the same length \
+                    \n import : {len(self.import_prices)} \
+                    \n export : {len(self.export_prices)} "
+            )
+
+    def get_cost(self, t: int, energy: float) -> float:
+        """
+        Get the cost for operating the grid with the required amount of energy
+
+        Args:
+            t (int): The timestep for which the costs must be computed
+            energy (float): Energy to be sold (-) or bought (+)
+
+        Returns:
+            float: The cost in euros, positive is loss, negative is gain
+        """
+        if energy >= 0:
+            cost = self.import_prices[t] * energy
+        else:
+            cost = self.export_prices[t] * energy
+        return cost
+
+    @property
+    def __len__(self) -> int:
+        """
+        Returns:
+            int: The length of prices series for safety checks
+        """
+        return len(self.import_prices)
 
 
 # class Load:

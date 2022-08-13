@@ -1,19 +1,8 @@
 import pytest
 
 from easygrid.env import GridEnv
-from easygrid.microgrid import Action
 
-CAPACITY = 1e5
-battery_config = {
-    "capacity": CAPACITY,
-    "high_capacity": 0.8 * CAPACITY,
-    "low_capacity": 0.2 * CAPACITY,
-    "max_output": 100,
-    "min_output": 20,
-    "initial_energy": 0.2 * CAPACITY,
-}
-config = {"BATTERY": battery_config, "MICROGRID": {"MAX_TIMESTEP": 1e3}}
-action: Action = {"battery": 1000, "grid": 1000}
+from .config import action, config
 
 
 def test_env():
