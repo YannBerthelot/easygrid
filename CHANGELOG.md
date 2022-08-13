@@ -1,5 +1,17 @@
 
 <a id='changelog-0.1.2'></a>
+# 0.1.2 — 2022-08-13
+
+## Added
+
+- Types files for collecting different custom types
+- Grid class to represent the grid object for importing/exporting operations
+
+## Changed
+
+- Changed from Python 3.8 to Python 3.9 for type subscription
+
+<a id='changelog-0.1.2'></a>
 # 0.1.2 — 2022-08-04
 
 ## Added

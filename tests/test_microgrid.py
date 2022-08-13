@@ -1,27 +1,30 @@
+import copy
+
+import numpy as np
 import pytest
 
-from easygrid.microgrid import Action, Battery, Microgrid
+from easygrid.microgrid import Battery, Grid, Microgrid
+from easygrid.types import GridConfig
 
-CAPACITY = 1e5
-battery_config = {
-    "capacity": CAPACITY,
-    "high_capacity": 0.8 * CAPACITY,
-    "low_capacity": 0.2 * CAPACITY,
-    "max_output": 100,
-    "min_output": 20,
-    "initial_energy": 0.2 * CAPACITY,
-}
-action: Action = {"battery": 1000, "grid": 1000}
+from .config import MAX_TIMESTEP, action, battery_config, config, grid_config
 
 
 def test_microgrid():
-    config = {"BATTERY": battery_config, "MICROGRID": {"MAX_TIMESTEP": 1e3}}
     mg = Microgrid(config)
     mg.run_timestep(action)
     with pytest.raises(NotImplementedError):
         mg.print_info()
     with pytest.raises(NotImplementedError):
         mg.reset()
+    faulty_grid_config: GridConfig = {
+        "import_prices": np.random.randint(5, size=MAX_TIMESTEP - 1),
+        "export_prices": np.random.randint(5, size=MAX_TIMESTEP - 1),
+    }
+    faulty_config = copy.deepcopy(config)
+    faulty_config["GRID"] = faulty_grid_config
+    with pytest.raises(ValueError):
+        faulty_mg = Microgrid(faulty_config)
+        faulty_mg
 
 
 def test_battery():
@@ -49,3 +52,17 @@ def test_battery():
     with pytest.raises(AssertionError):
         battery._energy = -1
         battery.energy
+
+
+def test_grid():
+    grid = Grid(grid_config)
+    assert grid.get_cost(energy=1e3, t=0) >= 0
+    assert grid.get_cost(energy=-1e3, t=0) <= 0
+    assert grid.get_cost(energy=0, t=0) == 0
+    faulty_config: GridConfig = {
+        "import_prices": np.random.randn(MAX_TIMESTEP),
+        "export_prices": np.random.randn(MAX_TIMESTEP - 1),
+    }
+    with pytest.raises(ValueError):
+        faulty_grid = Grid(faulty_config)
+        faulty_grid

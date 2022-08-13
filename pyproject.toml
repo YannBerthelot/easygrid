@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "easygrid"
-version = "0.1.5"
+version = "0.1.6"
 description = "Gym environment of simple microgrid simulation for Reinforcement Learning"
 authors = ["YANN BERTHELOT <yannberthelot1@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 numpy = "^1.23.1"
 gym = "^0.25.1"
 
