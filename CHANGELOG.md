@@ -4,6 +4,23 @@
 
 ## Added
 
+- Added basic PV functionnalities (including production scaling).
+
+## Changed
+
+- Changed minimum coverage to 100%.
+- Add scaling factor to prices (import and export) in Grid object.
+- Changed line limit to 88 characters for isort and black.
+
+## Fixed
+
+- Fixed incapacity to have 100% coverage due to an assert statement
+
+<a id='changelog-0.1.2'></a>
+# 0.1.2 — 2022-08-13
+
+## Added
+
 - Types files for collecting different custom types
 - Grid class to represent the grid object for importing/exporting operations
 
