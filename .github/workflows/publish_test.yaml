@@ -30,4 +30,6 @@ jobs:
         run: poetry config http-basic.testpypi __token__ $pypi_token
 
       - name: Build and publish
-        run: poetry publish --build
+        run: |
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry publish -r testpypi --build
