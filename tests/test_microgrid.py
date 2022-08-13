@@ -3,10 +3,10 @@ import copy
 import numpy as np
 import pytest
 
-from easygrid.microgrid import Battery, Grid, Microgrid
+from easygrid.microgrid import Battery, Grid, Microgrid, Photovoltaic
 from easygrid.types import GridConfig
 
-from .config import MAX_TIMESTEP, action, battery_config, config, grid_config
+from .config import MAX_TIMESTEP, action, battery_config, config, grid_config, pv_config
 
 
 def test_microgrid():
@@ -22,6 +22,15 @@ def test_microgrid():
     }
     faulty_config = copy.deepcopy(config)
     faulty_config["GRID"] = faulty_grid_config
+    with pytest.raises(ValueError):
+        faulty_mg = Microgrid(faulty_config)
+        faulty_mg
+
+    faulty_pv_config: GridConfig = {
+        "pv_production_ts": np.random.randint(5, size=MAX_TIMESTEP - 1),
+    }
+    faulty_config = copy.deepcopy(config)
+    faulty_config["PV"] = faulty_pv_config
     with pytest.raises(ValueError):
         faulty_mg = Microgrid(faulty_config)
         faulty_mg
@@ -49,16 +58,16 @@ def test_battery():
         and (battery.state_of_charge <= 1)
     )
     assert isinstance(battery.energy, float) and (battery.energy >= 0)
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         battery._energy = -1
         battery.energy
 
 
 def test_grid():
     grid = Grid(grid_config)
-    assert grid.get_cost(energy=1e3, t=0) >= 0
-    assert grid.get_cost(energy=-1e3, t=0) <= 0
-    assert grid.get_cost(energy=0, t=0) == 0
+    assert grid.get_cost(energy=1e3, t=np.random.randint(grid.__len__)) >= 0
+    assert grid.get_cost(energy=-1e3, t=np.random.randint(grid.__len__)) <= 0
+    assert grid.get_cost(energy=0, t=np.random.randint(grid.__len__)) == 0
     faulty_config: GridConfig = {
         "import_prices": np.random.randn(MAX_TIMESTEP),
         "export_prices": np.random.randn(MAX_TIMESTEP - 1),
@@ -66,3 +75,8 @@ def test_grid():
     with pytest.raises(ValueError):
         faulty_grid = Grid(faulty_config)
         faulty_grid
+
+
+def test_pv():
+    pv = Photovoltaic(pv_config)
+    pv.get_power(np.random.randint(pv.__len__))

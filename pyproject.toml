@@ -19,7 +19,10 @@ flake8 = "^5.0.3"
 black = {version = "^22.6.0", allow-prereleases = true}
 
 [tool.black]
-line-length = 79
+line-length = 88
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
