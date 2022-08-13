@@ -16,7 +16,7 @@ It is losely based on pymgrid (https://github.com/Total-RD/pymgrid) and should a
 This package uses poetry if you wish to build it yourself.
 
 ```bash
-git clone https://github.com/YannBerthelot/easygrid.git
+git clone https://github.com/YannBerthelot/ easygrid.git
 cd easygrid
 poetry install
 ```
