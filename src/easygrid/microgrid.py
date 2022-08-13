@@ -36,9 +36,11 @@ class Microgrid:
         """
         battery_config: BatteryConfig = config["BATTERY"]
         grid_config: GridConfig = config["GRID"]
+        pv_config: PvConfig = config["PV"]
 
         self.battery = Battery(battery_config)
         self.grid = Grid(grid_config)
+        self.pv = Photovoltaic(pv_config)
 
         self.t = 0
         self.MAX_TIMESTEP = config["MICROGRID"]["MAX_TIMESTEP"]
@@ -47,6 +49,11 @@ class Microgrid:
             raise ValueError(
                 f"Prices timeseries are shorter ({self.grid.__len__ }) than \
                     the maximum number of timesteps ({self.MAX_TIMESTEP})"
+            )
+        if self.pv.__len__ < self.MAX_TIMESTEP:
+            raise ValueError(
+                f"PV production timeseries are shorter ({self.pv.__len__ }) \
+                    than the maximum number of timesteps ({self.MAX_TIMESTEP})"
             )
         # self.load = Load()
 
@@ -169,9 +176,10 @@ class Battery:
         Returns:
             float: The current energy quantity stored in the battery
         """
-        assert self._energy >= 0, "Energy is negative, there is a problem"
         if self._energy >= 0:
             return self._energy
+        else:
+            raise ValueError(f"Energy is negative ({self._energy}), there is a problem")
 
     def charge_discharge(self, energy: float) -> float:
         """
@@ -290,7 +298,7 @@ class Photovoltaic:
 
     Attributes
     ----------
-    import_prices : List[float]
+    pv_production_ts_ : List[float]
         The timeserie for pv_production prices (energy produced per timestep).
     production_factor : float
         A scaling factor to easily modify the pv production.
@@ -310,7 +318,7 @@ class Photovoltaic:
         Args:
             pv_config (PvConfig): Configuration for the PV.
         """
-        self.pv_production_ts_ = pv_config["PV_config"]
+        self.pv_production_ts_ = pv_config["pv_production_ts"]
         self.production_factor = 1
 
     @property

@@ -1,6 +1,6 @@
 import numpy as np
 
-from easygrid.types import Action, BatteryConfig, GridConfig
+from easygrid.types import Action, BatteryConfig, GridConfig, PvConfig
 
 CAPACITY = 1e5
 MAX_TIMESTEP = int(1e3)
@@ -19,8 +19,13 @@ grid_config: GridConfig = {
     "export_prices": np.random.randint(5, size=MAX_TIMESTEP),
 }
 
+pv_config: PvConfig = {
+    "pv_production_ts": np.random.randint(5, size=MAX_TIMESTEP),
+}
+
 config = {
     "BATTERY": battery_config,
     "MICROGRID": {"MAX_TIMESTEP": MAX_TIMESTEP},
     "GRID": grid_config,
+    "PV": pv_config,
 }
