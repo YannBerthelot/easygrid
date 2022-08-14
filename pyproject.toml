@@ -26,10 +26,13 @@ line-length = 88
 [tool.isort]
 profile = "black"
 
+[tool.flake8]
+max-line-length = 88
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.scriv]
 format = "md"
-version = "literal: src/easygrid/__init__.py: __version__"
+version = "literal: pyproject.toml: tool.poetry.version"
