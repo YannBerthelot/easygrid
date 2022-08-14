@@ -45,4 +45,15 @@ class PvConfig(TypedDict):
         to the microgrid
     """
 
+    # ts for timeserie
     pv_prouction_ts: Union[List[float], np.ndarray]
+
+
+class LoadConfig(TypedDict):
+    """
+    This TypedDict represents the load config template to be fed \
+        to the microgrid
+    """
+
+    # ts for timeserie
+    load_ts: Union[List[float], np.ndarray]
