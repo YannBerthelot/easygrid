@@ -2,8 +2,9 @@
 This module creates thhe microgrid object
 """
 
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from easygrid.types import Action, BatteryConfig, GridConfig, LoadConfig, PvConfig
@@ -161,6 +162,42 @@ class Microgrid:
         self.costs["overcharge"].append(overcharge)
         self.costs["grid"].append(grid)
         self.costs["error"].append(error)
+        self.costs["total"].append(overcharge + grid + error)
+
+    def get_logs(self) -> dict:
+        """
+        Return the logs in a dict format for energies and costs
+
+        Returns:
+            dict: Costs and energies logs.
+        """
+        return {"costs": self.costs, "energies": self.energies}
+
+    def show_logs(self, show=True) -> Any[None, Tuple[plt.Axes]]:
+        """
+        Plot the available logs in a simple fashion.
+
+        Args:
+            show (bool, optional): Wether or not to show the graphs or return \
+                the matplotlib figs instead for later use. Defaults to True.
+
+        Returns:
+            Any[None, Tuple[plt.Axes]]: Either nothing or the created figures.
+        """
+        figures = []
+        for data_name, data in self.get_logs().items():
+            fig, ax = plt.subplots(len(data), 1, figsize=(8, 6))
+            for i, (name, points) in enumerate(data.items()):
+                ax[i].plot(points)
+                ax[i].set_title(name.capitalize())
+            plt.suptitle(data_name.capitalize())
+            plt.tight_layout()
+            if show:
+                plt.show()
+            else:
+                figures.append(fig)
+        if not show:
+            return figures
 
     @property
     def obs(self) -> np.ndarray:

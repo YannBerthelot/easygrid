@@ -9,8 +9,11 @@ from easygrid.types import (
     PvConfig,
 )
 
+action: Action = {"battery": 1000, "grid": 1000}
+
 CAPACITY = 1e5
 MAX_TIMESTEP = int(1e3)
+
 battery_config: BatteryConfig = {
     "capacity": CAPACITY,
     "high_capacity": 0.8 * CAPACITY,
@@ -20,7 +23,6 @@ battery_config: BatteryConfig = {
     "initial_energy": 0.2 * CAPACITY,
     "overcharge_penalty": 1,
 }
-action: Action = {"battery": 1000, "grid": 1000}
 
 grid_config: GridConfig = {
     "import_prices": np.random.randint(5, size=MAX_TIMESTEP),
