@@ -27,6 +27,7 @@ class Microgrid:
     reset : resets the environment to an initial state and returns this state.
     """
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, config: dict) -> None:
         """
         Creates the relevant attributes based on the config
@@ -37,13 +38,22 @@ class Microgrid:
         battery_config: BatteryConfig = config["BATTERY"]
         grid_config: GridConfig = config["GRID"]
         pv_config: PvConfig = config["PV"]
+        load_config: LoadConfig = config["LOAD"]
 
         self.battery = Battery(battery_config)
         self.grid = Grid(grid_config)
         self.pv = Photovoltaic(pv_config)
+        self.load = Load(load_config)
+
+        mg_config = config["MICROGRID"]  # flor clarity purposes
+        self.overproduction_penalty = mg_config["overprod_penalty"]
+        self.underproduction_penalty = mg_config["underprod_penalty"]
+        self.MAX_TIMESTEP = mg_config["max_timestep"]
 
         self.t = 0
-        self.MAX_TIMESTEP = config["MICROGRID"]["MAX_TIMESTEP"]
+        self.delta_t = 1
+
+        self._init_logs_()
 
         if self.grid.__len__ < self.MAX_TIMESTEP:
             raise ValueError(
@@ -57,7 +67,9 @@ class Microgrid:
             )
         # self.load = Load()
 
-    def run_timestep(self, action: Action) -> Tuple[np.ndarray, bool]:
+    def run_timestep(
+        self, action: Action, logging: bool = True
+    ) -> Tuple[np.ndarray, bool]:
         """
         Executes the action on the microgrid and computes the following state
 
@@ -70,9 +82,85 @@ class Microgrid:
         Returns:
             Tuple[np.ndarray, bool]: The next state and terminal state flag
         """
-        self.battery.charge_discharge(action["battery"])
         self.t += 1
+
+        energy_battery = action["battery"]
+        energy_grid = action["grid"]
+        energy_pv = self.pv.get_power(self.t) * self.delta_t
+        energy_load = self.load.get_load(self.t) * self.delta_t
+        energy_balance = energy_pv + energy_grid - energy_load - energy_battery
+
+        overcharge = self.battery.charge_discharge(energy_battery)
+        overcharge_cost = self.battery.get_overcharge_cost(overcharge)
+        grid_cost = self.grid.get_cost(self.t, energy_grid)
+        error_cost = self.get_error_cost(energy_balance)
+
+        if logging:
+            self.log_energies(
+                energy_battery, energy_grid, energy_pv, energy_load, energy_balance
+            )
+            self.log_costs(overcharge_cost, grid_cost, error_cost)
         return self.obs, self.done
+
+    def get_error_cost(self, energy_balance: float) -> float:
+        """
+        Compute the cost for not prodiving the right amount of energy.
+        Either too much or not enough
+
+        Args:
+            energy (float): the energy balance (overprod:+, underprod:-)
+
+        Returns:
+            float: The cost ($) for not meeting the requirement
+        """
+        if energy_balance >= 0:
+            return energy_balance * self.overproduction_penalty
+        else:
+            return energy_balance * self.underproduction_penalty
+
+    def _init_logs_(self):
+        """
+        Initialize lists for logging energies and costs.
+        """
+        self.energies = {"balance": [], "battery": [], "grid": [], "pv": [], "load": []}
+        self.costs = {"total": [], "overcharge": [], "grid": [], "error": []}
+
+    def log_energies(
+        self, battery: float, grid: float, pv: float, load: float, balance: float = None
+    ):
+        """
+        Log the different energies collected at the current timestep
+
+        Args:
+            battery (float): The energy charged in or withdrawn from the battery
+            grid (float): The energy bought (+) or sold (-) to the grid
+            pv (float): The energy produced from the pv panels
+            load (float): The energy required by the local network
+            balance (float, optional): The energy balance. Defaults to None.
+        """
+        # pylint: disable=too-many-arguments
+
+        if balance is None:
+            balance = pv + grid - load - battery
+        self.energies["battery"].append(battery)
+        self.energies["grid"].append(grid)
+        self.energies["pv"].append(pv)
+        self.energies["load"].append(load)
+        self.energies["balance"].append(balance)
+
+    def log_costs(self, overcharge: float, grid: float, error: float):
+        """
+        Log the different costs collected at the current timestep
+
+        Args:
+            overcharge (float): The costs due to overcharging or undercharging \
+                the battery
+            grid (float): The costs of operating the grid (buying:+ or selling:-)
+            error (float): The costs due to not meeting the local energy requirements
+        """
+        self.costs["overcharge"].append(overcharge)
+        self.costs["grid"].append(grid)
+        self.costs["error"].append(error)
 
     @property
     def obs(self) -> np.ndarray:
@@ -157,6 +245,7 @@ class Battery:
         self.max_output = battery_config["max_output"]
         self.min_output = battery_config["min_output"]
         self._energy = battery_config["initial_energy"]
+        self.overcharge_penalty = battery_config["overcharge_penalty"]
 
     @property
     def state_of_charge(self) -> float:
@@ -205,6 +294,18 @@ class Battery:
             undercharge = max(0, self.low_capacity - new_energy)
             self._energy = max(self.low_capacity, new_energy)
             return undercharge
+
+    def get_overcharge_cost(self, overcharge: float) -> float:
+        """
+        Compute the overcharge cost for not meeting the optimal battery thresholds
+
+        Args:
+            overcharge (float): The quantity of energy outside the correct range.
+
+        Returns:
+            float: The corresponding cost for underoptimal operation of the battery
+        """
+        return overcharge * self.overcharge_penalty
 
 
 class Grid:
