@@ -1,4 +1,6 @@
 """
 Easygrid
 """
-__version__ = "0.1.2"
+import importlib
+
+__version__ = importlib.metadata.version("my-distribution")
