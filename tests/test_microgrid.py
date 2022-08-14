@@ -3,10 +3,18 @@ import copy
 import numpy as np
 import pytest
 
-from easygrid.microgrid import Battery, Grid, Microgrid, Photovoltaic
+from easygrid.microgrid import Battery, Grid, Load, Microgrid, Photovoltaic
 from easygrid.types import GridConfig
 
-from .config import MAX_TIMESTEP, action, battery_config, config, grid_config, pv_config
+from .config import (
+    MAX_TIMESTEP,
+    action,
+    battery_config,
+    config,
+    grid_config,
+    load_config,
+    pv_config,
+)
 
 
 def test_microgrid():
@@ -80,3 +88,8 @@ def test_grid():
 def test_pv():
     pv = Photovoltaic(pv_config)
     pv.get_power(np.random.randint(pv.__len__))
+
+
+def test_load():
+    load = Load(load_config)
+    load.get_load(np.random.randint(load.__len__))

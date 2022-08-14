@@ -6,7 +6,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 
-from easygrid.types import Action, BatteryConfig, GridConfig, PvConfig
+from easygrid.types import Action, BatteryConfig, GridConfig, LoadConfig, PvConfig
 
 
 class Microgrid:
@@ -299,7 +299,7 @@ class Photovoltaic:
     Attributes
     ----------
     pv_production_ts_ : List[float]
-        The timeserie for pv_production prices (energy produced per timestep).
+        The timeserie for pv_production prices (power available per timestep).
     production_factor : float
         A scaling factor to easily modify the pv production.
     __len__ (property) : int
@@ -307,8 +307,7 @@ class Photovoltaic:
 
     Methods
     -------
-    get_cost : Get the running cost for a given timestep and energy to be \
-        bought/sold
+    get_cost : Get the power produced by PV for a given timestep.
     """
 
     def __init__(self, pv_config: PvConfig) -> None:
@@ -335,7 +334,7 @@ class Photovoltaic:
         Returns:
             int: The length of pv production serie for safety checks
         """
-        return len(self.pv_production_ts_)
+        return len(self.pv_production_ts)
 
     def get_power(self, t: int) -> float:
         """
@@ -351,6 +350,59 @@ class Photovoltaic:
         return self.pv_production_ts[t]
 
 
-# class Load:
-#     def __init__(self) -> None:
-#         pass
+class Load:
+    """
+    Models the local consumption of energy
+    ...
+
+    Attributes
+    ----------
+    load_ts_ : List[float]
+        The timeserie for load requirements (power required per timestep).
+    load_factor : float
+        A scaling factor to easily modify the load requirement.
+    __len__ (property) : int
+        The length of timeseries for safety checks.
+
+    Methods
+    -------
+    get_load : Get the load required for a given timestep
+    """
+
+    def __init__(self, load_config: LoadConfig) -> None:
+        """
+        Creates the relevant attributes based on the config
+
+        Args:
+            load_config (LoadConfig): Configuration for the load.
+        """
+        self.load_ts_ = load_config["load_ts"]
+        self.load_factor = 1.0
+
+    @property
+    def load_ts(self) -> Union[List[float], np.ndarray]:
+        """
+        Returns:
+            Union[List[float], np.ndarray]: The load timeserie rescaled.
+        """
+        return self.load_ts_ * self.load_factor
+
+    @property
+    def __len__(self) -> int:
+        """
+        Returns:
+            int: The length of pv production serie for safety checks
+        """
+        return len(self.load_ts)
+
+    def get_load(self, t: int) -> float:
+        """
+        Method to get the load required for the given timestep.\
+            Not really interesting, it exists for an easier framework.
+
+        Args:
+            t (int): the timestep for which to return load
+        Returns:
+            float: the corresponding load required by the local network
+        """
+        return self.load_ts[t]
