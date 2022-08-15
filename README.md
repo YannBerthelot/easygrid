@@ -29,7 +29,11 @@ pip install -i https://test.pypi.org/simple/easygrid
 
 ## Usage
 
-TBD
+To run the example:
+
+```bash
+python -m easygrid
+```
 
 ## Contributing
 
@@ -46,3 +50,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 - Extend and test logging system to track results
 - Add more tests to the simulation
 - Finish interactions of different parts
+- Add config file handling.
