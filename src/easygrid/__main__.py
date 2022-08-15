@@ -51,8 +51,20 @@ config = {
     "LOAD": load_config,
 }
 
-mg = Microgrid(config)
-for i in range(100):
-    action: Action = {"battery": np.random.randint(1e3), "grid": np.random.randint(1e3)}
-    mg.run_timestep(action)
-mg.show_logs()
+
+def main():
+    """
+    Example of microgrid operation
+    """
+    mg = Microgrid(config)
+    for _ in range(100):
+        action: Action = {
+            "battery": np.random.randint(1e3),
+            "grid": np.random.randint(1e3),
+        }
+        mg.run_timestep(action)
+    mg.show_logs()
+
+
+if __name__ == "__main__":
+    main()

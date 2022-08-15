@@ -2,7 +2,7 @@
 This module creates thhe microgrid object
 """
 
-from typing import Any, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -173,7 +173,7 @@ class Microgrid:
         """
         return {"costs": self.costs, "energies": self.energies}
 
-    def show_logs(self, show=True) -> Any[None, Tuple[plt.Axes]]:
+    def show_logs(self, show=True) -> Union[None, Tuple[plt.Axes]]:
         """
         Plot the available logs in a simple fashion.
 
