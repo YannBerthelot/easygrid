@@ -464,7 +464,7 @@ class Photovoltaic:
         Returns:
             Union[List[float], np.ndarray]: The production timeserie rescaled.
         """
-        return self.pv_production_ts_ * self.production_factor
+        return np.array(self.pv_production_ts_) * self.production_factor
 
     @property
     def __len__(self) -> int:
@@ -523,7 +523,7 @@ class Load:
         Returns:
             Union[List[float], np.ndarray]: The load timeserie rescaled.
         """
-        return self.load_ts_ * self.load_factor
+        return np.array(self.load_ts_) * self.load_factor
 
     @property
     def __len__(self) -> int:
