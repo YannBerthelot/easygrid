@@ -130,3 +130,4 @@ dmypy.json
 
 .vscode/
 changelog.d/*.md
+.DS_Store
