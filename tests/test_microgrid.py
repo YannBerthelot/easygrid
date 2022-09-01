@@ -1,8 +1,10 @@
 import copy
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 
+from easygrid.__main__ import main
 from easygrid.microgrid import Battery, Grid, Load, Microgrid, Photovoltaic
 from easygrid.types import GridConfig
 
@@ -17,9 +19,15 @@ from .config import (
 )
 
 
+@patch("matplotlib.pyplot.show")  # used to prevent displaying plots
+def test_main(mock_show):
+    main()  # includes testing show logs
+
+
 def test_microgrid():
     mg = Microgrid(config)
-    mg.run_timestep(action)
+    mg.run_timestep(action, logging=True)
+    mg.run_timestep(action, logging=False)
     with pytest.raises(NotImplementedError):
         mg.print_info()
     with pytest.raises(NotImplementedError):
@@ -42,6 +50,11 @@ def test_microgrid():
     with pytest.raises(ValueError):
         faulty_mg = Microgrid(faulty_config)
         faulty_mg
+    mg.get_error_cost(-1000)  # test error cost computation for negative energy
+    mg.get_error_cost(1000)  # test error cost computation for positive energy
+    mg.log_energies(1, 1, 1, 1)  # test auto balance computation
+    figs = mg.show_logs(show=False)
+    assert figs is not None
 
 
 def test_battery():

@@ -27,6 +27,7 @@ class BatteryConfig(TypedDict):
     max_output: float
     min_output: float
     initial_energy: float
+    overcharge_penalty: float
 
 
 class GridConfig(TypedDict):
@@ -57,3 +58,14 @@ class LoadConfig(TypedDict):
 
     # ts for timeserie
     load_ts: Union[List[float], np.ndarray]
+
+
+class MicrogridConfig(TypedDict):
+    """
+    This TypedDict represents the battery config template to be fed \
+        to the microgrid
+    """
+
+    max_timestep: int
+    overprod_penalty: float
+    underprod_penalty: float

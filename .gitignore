@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 .vscode/
+changelog.d/*.md
+.DS_Store
