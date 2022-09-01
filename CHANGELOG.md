@@ -1,3 +1,14 @@
+
+<a id='changelog-0.1.9'></a>
+# 0.1.9 — 2022-09-01
+
+## Added
+
+- Added coverage as dev dependecy and allowed configuration to exclude lines
+
+## Changed
+
+- Modified tests to prevent graphs from showing
 <a id='changelog-0.1.8'></a>
 
 # 0.1.8 — 2022-08-14
