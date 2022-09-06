@@ -7,6 +7,7 @@ from typing import List, Tuple, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
+from easygrid.data.data_utils import DATA_FOLDER, get_indexes
 from easygrid.types import Action, BatteryConfig, GridConfig, LoadConfig, PvConfig
 
 
@@ -40,6 +41,7 @@ class Microgrid:
         grid_config: GridConfig = config["GRID"]
         pv_config: PvConfig = config["PV"]
         load_config: LoadConfig = config["LOAD"]
+        self.indexes = get_indexes(data_folder=DATA_FOLDER)
 
         self.battery = Battery(battery_config)
         self.grid = Grid(grid_config)
@@ -66,7 +68,6 @@ class Microgrid:
                 f"PV production timeseries are shorter ({self.pv.__len__ }) \
                     than the maximum number of timesteps ({self.MAX_TIMESTEP})"
             )
-        # self.load = Load()
 
     def run_timestep(
         self, action: Action, logging: bool = True
