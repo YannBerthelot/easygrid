@@ -15,7 +15,7 @@ from easygrid.types import (
 )
 
 CAPACITY = 1e5
-MAX_TIMESTEP = int(1e3)
+MAX_TIMESTEP = 8760
 
 battery_config: BatteryConfig = {
     "capacity": CAPACITY,

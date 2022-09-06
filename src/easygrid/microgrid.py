@@ -69,6 +69,16 @@ class Microgrid:
                     than the maximum number of timesteps ({self.MAX_TIMESTEP})"
             )
 
+        if self.grid.__len__ < self.MAX_TIMESTEP:
+            raise ValueError(
+                f"Grid price timeseries are shorter ({self.grid.__len__ }) \
+                    than the maximum number of timesteps ({self.MAX_TIMESTEP})"
+            )
+
+    @property
+    def __len__(self):
+        return min(self.load.__len__, self.pv.__len__, self.grid.__len__)
+
     def run_timestep(
         self, action: Action, logging: bool = True
     ) -> Tuple[np.ndarray, bool]:
