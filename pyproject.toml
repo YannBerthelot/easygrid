@@ -11,6 +11,7 @@ numpy = "^1.23.1"
 gym = "^0.25.1"
 single-source = "^0.3.0"
 matplotlib = "^3.5.3"
+pandas = "^1.4.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
