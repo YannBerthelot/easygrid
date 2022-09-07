@@ -258,12 +258,21 @@ class Microgrid:
 
     def set_battery_from_duration(self, nb_of_hours: float) -> None:
         """
-        Set the battery capacity to a given number of hours under mean load
+        Set the battery config to handle a given number of hours under mean load
 
         Args:
             nb_of_hours (float): The capacity of the battery in hours
         """
         self.battery.capacity = self.load.__mean__ * nb_of_hours
+        self.battery.max_output = max(self.battery.max_output, self.load.__mean__)
+
+    # def set_pv_from_load(self, nb_of_hours: float) -> None:
+    #     """
+    #     Set the pv production capacity to a faction of the yearly load it can handle
+    #     Args:
+    #         nb_of_hours (float): The capacity of the battery in hours
+    #     """
+    #     self.battery.capacity = self.load.__mean__ * nb_of_hours
 
 
 class Battery:
@@ -555,6 +564,14 @@ class Photovoltaic:
         """
         return len(self.pv_production_ts)
 
+    @property
+    def __mean__(self) -> int:
+        """
+        Returns:
+            int: The mean of the pv production accross the timeserie
+        """
+        return np.mean(self.pv_production_ts)
+
     def get_power(self, t: int) -> float:
         """
         Method to get the power produced for the given timestep.\
@@ -623,7 +640,7 @@ class Load:
     def __len__(self) -> int:
         """
         Returns:
-            int: The length of pv production serie for safety checks
+            int: The length of the load timeserie
         """
         return len(self.load_ts)
 
@@ -631,7 +648,7 @@ class Load:
     def __mean__(self) -> int:
         """
         Returns:
-            int: The length of pv production serie for safety checks
+            int: The mean of the load accross the timeserie
         """
         return np.mean(self.load_ts)
 

@@ -108,6 +108,7 @@ def test_pv():
     pv = Photovoltaic(pv_config)
     pv.get_power(np.random.randint(pv.__len__))
     assert pv.config is not None
+    assert pv.__mean__ > 0
 
 
 def test_load():
