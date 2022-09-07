@@ -69,3 +69,24 @@ class MicrogridConfig(TypedDict):
     max_timestep: int
     overprod_penalty: float
     underprod_penalty: float
+
+
+# def check_type(param: Any, param_name: str, types: tuple):
+#     """
+#     Assess right type for a given param or raise ValueError \
+#         with explicit explanation
+
+#     Args:
+#         param (Any): The value to check
+#         param_name (str): The name to associate to the value
+#         types (tuple): The acceptable types
+
+#     Raises:
+#         ValueError: Explanation of why the check failed
+#     """
+#     if not isinstance(param, types):
+#         raise ValueError(
+#             f"Parameter {param_name} ({param}) is \
+#                         not of float or int type, but \
+#                             {type(param)} type"
+#         )

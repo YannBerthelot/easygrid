@@ -70,6 +70,24 @@ class Microgrid:
             )
 
     @property
+    def config(self) -> dict:
+        """
+        Returns:
+            dict: The current microgrid config
+        """
+        return {
+            "battery": self.battery.config,
+            "grid": self.grid.config,
+            "load": self.load.config,
+            "pv": self.pv.config,
+            "microgrid": {
+                "overprod_penalty": self.overproduction_penalty,
+                "underprod_penalty": self.underproduction_penalty,
+                "max_timestep": self.MAX_TIMESTEP,
+            },
+        }
+
+    @property
     def __len__(self):
         return min(self.load.__len__, self.pv.__len__, self.grid.__len__)
 
@@ -238,6 +256,15 @@ class Microgrid:
         """
         raise NotImplementedError
 
+    def set_battery_from_duration(self, nb_of_hours: float) -> None:
+        """
+        Set the battery capacity to a given number of hours under mean load
+
+        Args:
+            nb_of_hours (float): The capacity of the battery in hours
+        """
+        self.battery.capacity = self.load.__mean__ * nb_of_hours
+
 
 class Battery:
     """
@@ -290,10 +317,27 @@ class Battery:
         self.overcharge_penalty = battery_config["overcharge_penalty"]
 
     @property
+    def config(self) -> dict:
+        """
+
+        Returns:
+            dict: The current battery config
+        """
+        return {
+            "capacity": self.capacity,
+            "high_capacity": self.high_capacity,
+            "low_capacity": self.low_capacity,
+            "max_output": self.max_output,
+            "min_output": self.min_output,
+            "overcharge_penalty": self.overcharge_penalty,
+        }
+
+    @property
     def state_of_charge(self) -> float:
         """
         Returns:
-            float: the current state of charge of the battery (between 0 and 1)
+            float: the current state of charge of the battery \
+                (between 0 : empty and 1 : full)
         """
         soc = self._energy / self.capacity
         assert (
@@ -385,12 +429,30 @@ class Grid:
         self.export_prices_ = grid_config["export_prices"]
         self.import_price_factor = 1
         self.export_price_factor = 1
+        if "import_price_factor" in grid_config.keys():
+            self.import_price_factor = grid_config["import_price_factor"]
+        if "export_price_factor" in grid_config.keys():
+            self.export_price_factor = grid_config["export_price_factor"]
+
         if len(self.import_prices) != len(self.export_prices):
             raise ValueError(
                 f"Price timeseries are not of the same length \
                     \n import : {len(self.import_prices)} \
                     \n export : {len(self.export_prices)} "
             )
+
+    @property
+    def config(self) -> dict:
+        """
+        Returns:
+            dict: The current grid config
+        """
+        return {
+            "import_prices": self.import_prices,
+            "export_prices": self.export_prices,
+            "import_price_factor": self.import_price_factor,
+            "export_price_factor": self.export_price_factor,
+        }
 
     def get_cost(self, t: int, energy: float) -> float:
         """
@@ -462,6 +524,20 @@ class Photovoltaic:
         """
         self.pv_production_ts_ = pv_config["pv_production_ts"]
         self.production_factor = 1
+        if "production_factor" in pv_config.keys():
+            self.production_factor = pv_config["production_factor"]
+
+    @property
+    def config(self) -> dict:
+        """
+
+        Returns:
+            dict: The current pv config
+        """
+        return {
+            "pv_production_ts": self.pv_production_ts,
+            "production_factor": self.production_factor,
+        }
 
     @property
     def pv_production_ts(self) -> Union[List[float], np.ndarray]:
@@ -521,6 +597,19 @@ class Load:
         """
         self.load_ts_ = load_config["load_ts"]
         self.load_factor = 1.0
+        if "load_factor" in load_config.keys():
+            self.load_factor = load_config["load_factor"]
+
+    @property
+    def config(self) -> dict:
+        """
+        Returns:
+            dict: The current load config
+        """
+        return {
+            "load_ts": self.load_ts,
+            "load_factor": self.load_factor,
+        }
 
     @property
     def load_ts(self) -> Union[List[float], np.ndarray]:
@@ -537,6 +626,14 @@ class Load:
             int: The length of pv production serie for safety checks
         """
         return len(self.load_ts)
+
+    @property
+    def __mean__(self) -> int:
+        """
+        Returns:
+            int: The length of pv production serie for safety checks
+        """
+        return np.mean(self.load_ts)
 
     def get_load(self, t: int) -> float:
         """
