@@ -1,5 +1,20 @@
 
 <a id='changelog-0.1.9'></a>
+# 0.1.9 — 2022-09-07
+
+## Added
+
+- Added load and pv data from pymgrid
+- Added pymgrid_config to be used in experiments.
+- Added config extraction from different classes
+- Added battery configuration from duration and mean load
+- Added mean attributes to classes if applicable
+
+## Changed
+
+- Version number tracking is now handled in pyproject.toml entirely
+
+<a id='changelog-0.1.9'></a>
 # 0.1.9 — 2022-09-01
 
 ## Added
