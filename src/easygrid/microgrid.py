@@ -228,7 +228,15 @@ class Microgrid:
         Returns:
             np.ndarray: The current state of the microgrid
         """
-        return np.array([self.battery.state_of_charge])
+        return np.array(
+            [
+                self.battery.state_of_charge,
+                self.grid.import_prices[self.t + 1],
+                self.grid.export_prices[self.t + 1],
+                self.load.get_load(self.t + 1),
+                self.pv.get_power(self.t + 1),
+            ]
+        )
 
     @property
     def done(self) -> bool:
@@ -236,7 +244,9 @@ class Microgrid:
         Returns:
             bool: Wether or not the microgrid is in a final state
         """
-        return self.t >= self.MAX_TIMESTEP
+        return (
+            self.t >= self.MAX_TIMESTEP - 1
+        )  # to allow to see the upcoming prices and load before taking action
 
     def print_info(self):
         """
@@ -247,14 +257,22 @@ class Microgrid:
         """
         raise NotImplementedError
 
-    def reset(self):
+    def reset(self, reset_logs=False) -> np.ndarray:
         """
-        TBD
+        Reset the microgrid in its original state.
 
-        Raises:
-            NotImplementedError: _description_
+        Args:
+            reset_logs (bool, optional): Wether or not to reset the log arrays.\
+                Defaults to False.
+
+        Returns:
+            np.ndarray: The initial observation of the environment
         """
-        raise NotImplementedError
+        self.t = 0
+        self.battery.reset()
+        if reset_logs:
+            self._init_logs_()
+        return self.obs
 
     def set_battery_from_duration(self, nb_of_hours: float) -> None:
         """
@@ -323,7 +341,14 @@ class Battery:
         self.max_output = battery_config["max_output"]
         self.min_output = battery_config["min_output"]
         self._energy = battery_config["initial_energy"]
+        self.initial_energy = battery_config["initial_energy"]
         self.overcharge_penalty = battery_config["overcharge_penalty"]
+
+    def reset(self):
+        """
+        Reset the battery energy/soc to the initial setting
+        """
+        self._energy = self.initial_energy
 
     @property
     def config(self) -> dict:
@@ -339,6 +364,7 @@ class Battery:
             "max_output": self.max_output,
             "min_output": self.min_output,
             "overcharge_penalty": self.overcharge_penalty,
+            "initial_energy": self.initial_energy,
         }
 
     @property
