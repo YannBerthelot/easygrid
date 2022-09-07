@@ -27,14 +27,18 @@ battery_config: BatteryConfig = {
 grid_config: GridConfig = {
     "import_prices": np.random.randint(5, size=MAX_TIMESTEP),
     "export_prices": np.random.randint(5, size=MAX_TIMESTEP),
+    "import_price_factor": 1.5,
+    "export_price_factor": 1.2,
 }
 
 pv_config: PvConfig = {
     "pv_production_ts": np.random.randint(5, size=MAX_TIMESTEP),
+    "production_factor": 1.1,
 }
 
 load_config: LoadConfig = {
     "load_ts": np.random.randint(5, size=MAX_TIMESTEP),
+    "load_factor": 2.1,
 }
 mg_config: MicrogridConfig = {
     "max_timestep": MAX_TIMESTEP,

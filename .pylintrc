@@ -55,7 +55,7 @@ disable=no-else-return, no-self-argument, import-error, inconsistent-return-stat
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=missing-function-docstring, missing-module-docstring, missing-class-docstring
+enable=duplicate-code, missing-function-docstring, missing-module-docstring, missing-class-docstring
 
 
 [REPORTS]
@@ -261,11 +261,10 @@ ignore-comments=yes
 ignore-docstrings=yes
 
 # Ignore imports when computing similarities.
-ignore-imports=no
+ignore-imports=yes
 
 # Minimum lines number of a similarity.
-min-similarity-lines=4
-
+min-similarity-lines=6
 
 [VARIABLES]
 

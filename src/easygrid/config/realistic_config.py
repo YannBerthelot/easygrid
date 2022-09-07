@@ -1,6 +1,8 @@
 """
 'Realistic' config to be used for testing
 """
+from functools import partial
+
 import numpy as np
 
 from easygrid.math_utils import get_hourly_variation
@@ -13,7 +15,7 @@ from easygrid.types import (
 )
 
 CAPACITY = 1e5
-MAX_TIMESTEP = int(1e3)
+MAX_TIMESTEP = 8760
 
 battery_config: BatteryConfig = {
     "capacity": CAPACITY,
@@ -25,19 +27,12 @@ battery_config: BatteryConfig = {
     "overcharge_penalty": 1,
 }
 
+day_variation = partial(
+    get_hourly_variation, period=24, time_max=15, time_min=3, size=MAX_TIMESTEP
+)
 grid_config: GridConfig = {
-    "import_prices": list(
-        i
-        for i in get_hourly_variation(
-            max_val=10, min_val=6, period=24, time_max=15, time_min=3, size=MAX_TIMESTEP
-        )
-    ),
-    "export_prices": list(
-        i
-        for i in get_hourly_variation(
-            max_val=5, min_val=1, period=24, time_max=15, time_min=3, size=MAX_TIMESTEP
-        )
-    ),
+    "import_prices": list(i for i in day_variation(max_val=10, min_val=6)),
+    "export_prices": list(i for i in day_variation(max_val=5, min_val=1)),
 }
 pv_config: PvConfig = {
     "pv_production_ts": list(

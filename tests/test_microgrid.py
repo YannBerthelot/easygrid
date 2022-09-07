@@ -55,6 +55,10 @@ def test_microgrid():
     mg.log_energies(1, 1, 1, 1)  # test auto balance computation
     figs = mg.show_logs(show=False)
     assert figs is not None
+    assert mg.config is not None
+    duration = 10
+    mg.set_battery_from_duration(duration)
+    assert mg.battery.capacity == mg.load.__mean__ * duration
 
 
 def test_battery():
@@ -82,6 +86,7 @@ def test_battery():
     with pytest.raises(ValueError):
         battery._energy = -1
         battery.energy
+    assert battery.config is not None
 
 
 def test_grid():
@@ -96,13 +101,17 @@ def test_grid():
     with pytest.raises(ValueError):
         faulty_grid = Grid(faulty_config)
         faulty_grid
+    assert grid.config is not None
 
 
 def test_pv():
     pv = Photovoltaic(pv_config)
     pv.get_power(np.random.randint(pv.__len__))
+    assert pv.config is not None
+    assert pv.__mean__ > 0
 
 
 def test_load():
     load = Load(load_config)
     load.get_load(np.random.randint(load.__len__))
+    assert load.config is not None
