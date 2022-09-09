@@ -1,12 +1,28 @@
 """
 Type helpers for the project
 """
-from typing import List, TypedDict, Union
+from typing import Any, Optional
 
 import numpy as np
+from pydantic import BaseModel
+
+JSON_ENCODERS = {np.ndarray: lambda arr: arr.tolist()}
 
 
-class Action(TypedDict):
+class NumpyNDArray(np.ndarray):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: Any) -> str:
+        # validate data...
+        if not isinstance(v, np.ndarray):
+            raise TypeError(f"numpy.ndarray required (currently {type(v)})")
+        return v
+
+
+class Action(BaseModel):
     """
     This TypedDict represents the action template to be fed to the microgrid
     """
@@ -15,7 +31,7 @@ class Action(TypedDict):
     grid: float
 
 
-class BatteryConfig(TypedDict):
+class BatteryConfig(BaseModel):
     """
     This TypedDict represents the battery config template to be fed \
         to the microgrid
@@ -26,41 +42,54 @@ class BatteryConfig(TypedDict):
     low_capacity: float
     max_output: float
     min_output: float
-    initial_energy: float
+    initial_energy: Optional[float] = 0
     overcharge_penalty: float
 
 
-class GridConfig(TypedDict):
+class GridConfig(BaseModel):
     """
     This TypedDict represents the grid config template to be fed \
         to the microgrid
     """
 
-    import_prices: Union[List[float], np.ndarray]
-    export_prices: Union[List[float], np.ndarray]
+    import_prices: NumpyNDArray
+    export_prices: NumpyNDArray
+    import_price_factor: Optional[float] = 1.0
+    export_price_factor: Optional[float] = 1.0
+
+    class Config:
+        json_encoders = JSON_ENCODERS
 
 
-class PvConfig(TypedDict):
+class PvConfig(BaseModel):
     """
     This TypedDict represents the pv panel config template to be fed \
         to the microgrid
     """
 
     # ts for timeserie
-    pv_prouction_ts: Union[List[float], np.ndarray]
+    pv_production_ts: NumpyNDArray
+    production_factor: Optional[float] = 1.0
+
+    class Config:
+        json_encoders = JSON_ENCODERS
 
 
-class LoadConfig(TypedDict):
+class LoadConfig(BaseModel):
     """
     This TypedDict represents the load config template to be fed \
         to the microgrid
     """
 
     # ts for timeserie
-    load_ts: Union[List[float], np.ndarray]
+    load_ts: NumpyNDArray
+    load_factor: Optional[float] = 1.0
+
+    class Config:
+        json_encoders = JSON_ENCODERS
 
 
-class MicrogridConfig(TypedDict):
+class MicrogridConfig(BaseModel):
     """
     This TypedDict represents the battery config template to be fed \
         to the microgrid
@@ -69,6 +98,13 @@ class MicrogridConfig(TypedDict):
     max_timestep: int
     overprod_penalty: float
     underprod_penalty: float
+    pv: PvConfig
+    load: LoadConfig
+    grid: GridConfig
+    battery: BatteryConfig
+
+    class Config:
+        json_encoders = JSON_ENCODERS
 
 
 # def check_type(param: Any, param_name: str, types: tuple):
