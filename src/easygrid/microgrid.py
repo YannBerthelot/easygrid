@@ -1,14 +1,21 @@
 """
 This module creates thhe microgrid object
 """
-
+import json
 from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from easygrid.data.data_utils import DATA_FOLDER, get_indexes
-from easygrid.types import Action, BatteryConfig, GridConfig, LoadConfig, PvConfig
+from easygrid.types import (
+    Action,
+    BatteryConfig,
+    GridConfig,
+    LoadConfig,
+    MicrogridConfig,
+    PvConfig,
+)
 
 
 class Microgrid:
@@ -30,28 +37,27 @@ class Microgrid:
     """
 
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: MicrogridConfig) -> None:
         """
         Creates the relevant attributes based on the config
 
         Args:
             config (dict): Configuration for the underlying microgrid.
         """
-        battery_config: BatteryConfig = config["BATTERY"]
-        grid_config: GridConfig = config["GRID"]
-        pv_config: PvConfig = config["PV"]
-        load_config: LoadConfig = config["LOAD"]
+        # battery_config: BatteryConfig = config.battery
+        # grid_config: GridConfig = config.grid
+        # pv_config: PvConfig = config.pv
+        # load_config: LoadConfig = config.load
         self.indexes = get_indexes(data_folder=DATA_FOLDER)
 
-        self.battery = Battery(battery_config)
-        self.grid = Grid(grid_config)
-        self.pv = Photovoltaic(pv_config)
-        self.load = Load(load_config)
+        self.battery = Battery(config.battery)
+        self.grid = Grid(config.grid)
+        self.pv = Photovoltaic(config.pv)
+        self.load = Load(config.load)
 
-        mg_config = config["MICROGRID"]  # flor clarity purposes
-        self.overproduction_penalty = mg_config["overprod_penalty"]
-        self.underproduction_penalty = mg_config["underprod_penalty"]
-        self.MAX_TIMESTEP = mg_config["max_timestep"]
+        self.overproduction_penalty = config.overprod_penalty
+        self.underproduction_penalty = config.underprod_penalty
+        self.MAX_TIMESTEP = config.max_timestep
 
         self.t = 0
         self.delta_t = 1
@@ -75,17 +81,18 @@ class Microgrid:
         Returns:
             dict: The current microgrid config
         """
-        return {
-            "battery": self.battery.config,
-            "grid": self.grid.config,
-            "load": self.load.config,
-            "pv": self.pv.config,
-            "microgrid": {
+        config = MicrogridConfig.parse_obj(
+            {
+                "battery": self.battery.config,
+                "grid": self.grid.config,
+                "load": self.load.config,
+                "pv": self.pv.config,
                 "overprod_penalty": self.overproduction_penalty,
                 "underprod_penalty": self.underproduction_penalty,
                 "max_timestep": self.MAX_TIMESTEP,
-            },
-        }
+            }
+        )
+        return config
 
     @property
     def __len__(self):
@@ -107,9 +114,8 @@ class Microgrid:
             Tuple[np.ndarray, bool]: The next state and terminal state flag
         """
         self.t += 1
-
-        energy_battery = action["battery"]
-        energy_grid = action["grid"]
+        energy_battery = action.battery
+        energy_grid = action.grid
         energy_pv = self.pv.get_power(self.t) * self.delta_t
         energy_load = self.load.get_load(self.t) * self.delta_t
         energy_balance = energy_pv + energy_grid - energy_load - energy_battery
@@ -281,7 +287,12 @@ class Microgrid:
         Args:
             nb_of_hours (float): The capacity of the battery in hours
         """
-        self.battery.capacity = self.load.__mean__ * nb_of_hours
+        new_capacity = self.load.__mean__ * nb_of_hours
+        self.battery.initial_energy = (
+            new_capacity / self.battery.capacity
+        ) * self.battery.initial_energy
+        self.battery.capacity = new_capacity
+        self.battery.reset()
         self.battery.max_output = max(self.battery.max_output, self.load.__mean__)
 
     # def set_pv_from_load(self, nb_of_hours: float) -> None:
@@ -291,6 +302,13 @@ class Microgrid:
     #         nb_of_hours (float): The capacity of the battery in hours
     #     """
     #     self.battery.capacity = self.load.__mean__ * nb_of_hours
+
+    def save_config(self, file_name="./config.json"):
+        """
+        Save the current config to a json fille.
+        """
+        with open(file_name, "w", encoding="utf-8") as json_file:
+            json.dump(self.config.json(), json_file)
 
 
 class Battery:
@@ -335,14 +353,14 @@ class Battery:
         Args:
             battery_config (BatteryConfig): Configuration for the battery.
         """
-        self.capacity = battery_config["capacity"]
-        self.high_capacity = battery_config["high_capacity"]
-        self.low_capacity = battery_config["low_capacity"]
-        self.max_output = battery_config["max_output"]
-        self.min_output = battery_config["min_output"]
-        self._energy = battery_config["initial_energy"]
-        self.initial_energy = battery_config["initial_energy"]
-        self.overcharge_penalty = battery_config["overcharge_penalty"]
+        self.capacity = battery_config.capacity
+        self.high_capacity = battery_config.high_capacity
+        self.low_capacity = battery_config.low_capacity
+        self.max_output = battery_config.max_output
+        self.min_output = battery_config.min_output
+        self._energy = battery_config.initial_energy
+        self.initial_energy = battery_config.initial_energy
+        self.overcharge_penalty = battery_config.overcharge_penalty
 
     def reset(self):
         """
@@ -460,14 +478,10 @@ class Grid:
         Args:
             grid_config (GridConfig): Configuration for the grid.
         """
-        self.import_prices_ = grid_config["import_prices"]
-        self.export_prices_ = grid_config["export_prices"]
-        self.import_price_factor = 1
-        self.export_price_factor = 1
-        if "import_price_factor" in grid_config.keys():
-            self.import_price_factor = grid_config["import_price_factor"]
-        if "export_price_factor" in grid_config.keys():
-            self.export_price_factor = grid_config["export_price_factor"]
+        self.import_prices_ = np.array(grid_config.import_prices)
+        self.export_prices_ = np.array(grid_config.export_prices)
+        self.import_price_factor = grid_config.import_price_factor
+        self.export_price_factor = grid_config.export_price_factor
 
         if len(self.import_prices) != len(self.export_prices):
             raise ValueError(
@@ -515,7 +529,7 @@ class Grid:
         return len(self.import_prices)
 
     @property
-    def import_prices(self) -> Union[List[float], np.ndarray]:
+    def import_prices(self) -> np.ndarray:
         """
         Returns:
             int: The length of prices series for safety checks
@@ -523,7 +537,7 @@ class Grid:
         return self.import_prices_ * self.import_price_factor
 
     @property
-    def export_prices(self) -> Union[List[float], np.ndarray]:
+    def export_prices(self) -> np.ndarray:
         """
         Returns:
             int: The length of prices series for safety checks
@@ -557,10 +571,8 @@ class Photovoltaic:
         Args:
             pv_config (PvConfig): Configuration for the PV.
         """
-        self.pv_production_ts_ = pv_config["pv_production_ts"]
-        self.production_factor = 1
-        if "production_factor" in pv_config.keys():
-            self.production_factor = pv_config["production_factor"]
+        self.pv_production_ts_ = pv_config.pv_production_ts
+        self.production_factor = pv_config.production_factor
 
     @property
     def config(self) -> dict:
@@ -638,10 +650,8 @@ class Load:
         Args:
             load_config (LoadConfig): Configuration for the load.
         """
-        self.load_ts_ = load_config["load_ts"]
+        self.load_ts_ = load_config.load_ts
         self.load_factor = 1.0
-        if "load_factor" in load_config.keys():
-            self.load_factor = load_config["load_factor"]
 
     @property
     def config(self) -> dict:

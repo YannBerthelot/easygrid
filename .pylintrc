@@ -53,7 +53,7 @@ disable=duplicate-code, no-else-return, no-self-argument, import-error, inconsis
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=duplicate-code, missing-function-docstring, missing-module-docstring, missing-class-docstring
+enable=missing-function-docstring, missing-module-docstring, missing-class-docstring
 
 
 [REPORTS]
