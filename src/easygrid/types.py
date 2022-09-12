@@ -15,7 +15,7 @@ class NumpyNDArray(np.ndarray):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Any) -> str:
+    def validate(cls, v: Any) -> np.ndarray:
         # validate data...
         if not isinstance(v, np.ndarray):
             raise TypeError(f"numpy.ndarray required (currently {type(v)})")

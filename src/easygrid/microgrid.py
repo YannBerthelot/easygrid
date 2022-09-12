@@ -2,7 +2,7 @@
 This module creates thhe microgrid object
 """
 import json
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -76,7 +76,7 @@ class Microgrid:
             )
 
     @property
-    def config(self) -> dict:
+    def config(self) -> MicrogridConfig:
         """
         Returns:
             dict: The current microgrid config
@@ -202,7 +202,7 @@ class Microgrid:
         """
         return {"costs": self.costs, "energies": self.energies}
 
-    def show_logs(self, show=True) -> Union[None, Tuple[plt.Axes]]:
+    def show_logs(self, show=True) -> Union[None, List[plt.Axes]]:
         """
         Plot the available logs in a simple fashion.
 
@@ -227,6 +227,7 @@ class Microgrid:
                 figures.append(fig)
         if not show:
             return figures
+        return None
 
     @property
     def obs(self) -> np.ndarray:
@@ -399,7 +400,7 @@ class Battery:
         return soc
 
     @property
-    def energy(self) -> float:
+    def energy(self) -> Optional[float]:
         """
         Returns:
             float: The current energy quantity stored in the battery

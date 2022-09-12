@@ -17,15 +17,17 @@ from easygrid.types import (
 CAPACITY = 1e5
 MAX_TIMESTEP = 8760
 
-battery_config: BatteryConfig = {
-    "capacity": CAPACITY,
-    "high_capacity": 0.8 * CAPACITY,
-    "low_capacity": 0.2 * CAPACITY,
-    "max_output": 100,
-    "min_output": 20,
-    "initial_energy": 0.2 * CAPACITY,
-    "overcharge_penalty": 1,
-}
+battery_config = BatteryConfig.parse_obj(
+    {
+        "capacity": CAPACITY,
+        "high_capacity": 0.8 * CAPACITY,
+        "low_capacity": 0.2 * CAPACITY,
+        "max_output": 100,
+        "min_output": 20,
+        "initial_energy": 0.2 * CAPACITY,
+        "overcharge_penalty": 1,
+    }
+)
 
 day_variation = partial(
     get_hourly_variation, period=24, time_max=15, time_min=3, size=MAX_TIMESTEP
