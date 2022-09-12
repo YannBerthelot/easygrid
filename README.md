@@ -59,3 +59,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 - Extend and test logging system to track results
 - Add more tests to the simulation
 - Add config file handling.
+- Optimize efficiency of code for fast simulations
