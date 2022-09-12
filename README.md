@@ -55,11 +55,7 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## To-do
 
-- Add example of simulation
 - Extend usage in readme.
 - Extend and test logging system to track results
 - Add more tests to the simulation
-- Finish interactions of different parts
 - Add config file handling.
-- remove .rst changelog (merge with .md first)
-- Build gym env on top of the microgrid.
