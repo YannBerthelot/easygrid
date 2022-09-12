@@ -118,11 +118,12 @@ class GridEnv(gym.Env):
     @abstractmethod
     def compute_reward(costs: Tuple[float, float, float]) -> float:
         """
-        Computes the reward/cost based on the current state of the system.
+        Computes the reward/cost based on the precomputed costs.
+        TBD : add the possibility to integrate the state of the microgrid
 
         Args:
-            mg (Microgrid): The microgrid for which we want to compute the \
-                cost, the cost will depend of its current state.
+            costs (Tuple[float, float, float]): The overcharge, grid and
+                                                    error costs
 
         Returns:
             float: The reward/cost

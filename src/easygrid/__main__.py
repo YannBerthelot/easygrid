@@ -1,5 +1,5 @@
 """
-Example of operating the microgrid
+Example of operating the microgrid using gym environment
 """
 from easygrid.config.pymgrid_config import mg_config
 from easygrid.env import GridEnv
