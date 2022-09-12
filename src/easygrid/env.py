@@ -7,6 +7,7 @@ from typing import Tuple
 
 import gym
 import numpy as np
+from gym import spaces
 
 from easygrid.microgrid import Action, Microgrid
 from easygrid.types import MicrogridConfig
@@ -46,13 +47,23 @@ class GridEnv(gym.Env):
         """
         super().__init__()
         self.microgrid = Microgrid(config)
-        # Define action and observation space
-        # They must be gym.spaces objects
-        # Example when using discrete actions:
-        # self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)
-        # # Example for using image as input:
-        # self.observation_space = spaces.Box(
-        # )
+        actions_dim = len(Action.__dict__["__fields__"])
+        self.observation_space = spaces.Box(
+            low=self.microgrid.min_values,
+            high=self.microgrid.max_values,
+            dtype=np.float32,
+        )
+        self.action_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(actions_dim,), dtype=np.float32
+        )
+
+    @property
+    def config(self) -> MicrogridConfig:
+        """
+        Returns:
+            MicrogridConfig: The current underlying config
+        """
+        return self.microgrid.config
 
     def step(self, action: Action) -> Tuple[np.ndarray, float, bool, str]:
         """
@@ -69,20 +80,19 @@ class GridEnv(gym.Env):
             Tuple[np.ndarray, float, bool, NoneType]: The observation, reward,\
                 done and info following gym template
         """
-        observation, done = self.microgrid.run_timestep(action)
-        reward = self.compute_reward()
+        observation, done, costs = self.microgrid.run_timestep(action)
+        reward = GridEnv.compute_reward(costs)
         info = ""
         return observation, reward, done, info
 
-    def reset(self, *args, **kwargs):
+    def reset(self) -> np.ndarray:
         """
         Resets the environment to an initial state and returns this state.
 
         Raises:
             NotImplementedError: _description_
         """
-        raise NotImplementedError
-        # return observation  # reward, done, info can't be included
+        return self.microgrid.reset()
 
     def render(self, mode="human"):
         """TBD
@@ -105,7 +115,7 @@ class GridEnv(gym.Env):
         raise NotImplementedError
 
     @abstractmethod
-    def compute_reward(mg: Microgrid) -> float:
+    def compute_reward(costs: Tuple[float, float, float]) -> float:
         """
         Computes the reward/cost based on the current state of the system.
 
@@ -116,5 +126,5 @@ class GridEnv(gym.Env):
         Returns:
             float: The reward/cost
         """
-        reward = 0.0
+        reward = sum(costs)
         return reward

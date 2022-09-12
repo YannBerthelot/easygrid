@@ -100,7 +100,7 @@ class Microgrid:
 
     def run_timestep(
         self, action: Action, logging: bool = True
-    ) -> Tuple[np.ndarray, bool]:
+    ) -> Tuple[np.ndarray, bool, Tuple[float, float, float]]:
         """
         Executes the action on the microgrid and computes the following state
 
@@ -124,13 +124,13 @@ class Microgrid:
         overcharge_cost = self.battery.get_overcharge_cost(overcharge)
         grid_cost = self.grid.get_cost(self.t, energy_grid)
         error_cost = self.get_error_cost(energy_balance)
-
+        costs = (overcharge_cost, grid_cost, error_cost)
         if logging:
             self.log_energies(
                 energy_battery, energy_grid, energy_pv, energy_load, energy_balance
             )
-            self.log_costs(overcharge_cost, grid_cost, error_cost)
-        return self.obs, self.done
+            self.log_costs(*costs)
+        return self.obs, self.done, costs
 
     def get_error_cost(self, energy_balance: float) -> float:
         """
@@ -243,6 +243,46 @@ class Microgrid:
                 self.load.get_load(self.t + 1),
                 self.pv.get_power(self.t + 1),
             ]
+        )
+
+    @property
+    def max_values(self) -> np.ndarray:
+        """
+        Get the max possible values for all observations
+
+        Returns:
+            Tuple[float, float, float, float, float]: The max values
+        """
+
+        return np.array(
+            [
+                1.0,
+                self.grid.import_prices.max(),
+                self.grid.export_prices.max(),
+                self.load.load_ts.max(),
+                self.pv.pv_production_ts.max(),
+            ],
+            dtype=np.float32,
+        )
+
+    @property
+    def min_values(self) -> np.ndarray:
+        """
+        Get the min possible values for all observations
+
+        Returns:
+            Tuple[float, float, float, float, float]: The min values
+        """
+
+        return np.array(
+            [
+                0.0,
+                self.grid.import_prices.min(),
+                self.grid.export_prices.min(),
+                self.load.load_ts.min(),
+                self.pv.pv_production_ts.min(),
+            ],
+            dtype=np.float32,
         )
 
     @property
@@ -479,8 +519,8 @@ class Grid:
         Args:
             grid_config (GridConfig): Configuration for the grid.
         """
-        self.import_prices_ = np.array(grid_config.import_prices)
-        self.export_prices_ = np.array(grid_config.export_prices)
+        self.import_prices_ = grid_config.import_prices
+        self.export_prices_ = grid_config.export_prices
         self.import_price_factor = grid_config.import_price_factor
         self.export_price_factor = grid_config.export_price_factor
 
@@ -588,12 +628,12 @@ class Photovoltaic:
         }
 
     @property
-    def pv_production_ts(self) -> Union[List[float], np.ndarray]:
+    def pv_production_ts(self) -> np.ndarray:
         """
         Returns:
             Union[List[float], np.ndarray]: The production timeserie rescaled.
         """
-        return np.array(self.pv_production_ts_) * self.production_factor
+        return self.pv_production_ts_ * self.production_factor
 
     @property
     def __len__(self) -> int:
@@ -666,12 +706,12 @@ class Load:
         }
 
     @property
-    def load_ts(self) -> Union[List[float], np.ndarray]:
+    def load_ts(self) -> np.ndarray:
         """
         Returns:
             Union[List[float], np.ndarray]: The load timeserie rescaled.
         """
-        return np.array(self.load_ts_) * self.load_factor
+        return self.load_ts_ * self.load_factor
 
     @property
     def __len__(self) -> int:
