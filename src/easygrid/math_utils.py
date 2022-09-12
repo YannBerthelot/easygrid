@@ -2,6 +2,7 @@
 Math utilitary functions
 """
 from math import pi, sin
+from typing import Generator
 
 
 def get_hourly_variation(
@@ -11,7 +12,7 @@ def get_hourly_variation(
     time_max: float,
     time_min: float,
     size: int,
-) -> list:
+) -> Generator[float, None, None]:
     """
     # Build a sin function out of the desired parameters to model an hourly \
     # variation of a variable.

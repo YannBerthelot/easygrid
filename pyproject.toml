@@ -11,6 +11,7 @@ numpy = "^1.23.1"
 gym = "^0.25.1"
 matplotlib = "^3.5.3"
 pandas = "^1.4.4"
+pydantic = "^1.10.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -20,6 +21,7 @@ tox = "^3.25.1"
 flake8 = "^5.0.3"
 black = {version = "^22.6.0", allow-prereleases = true}
 coverage = {extras = ["toml"], version = "^6.4.3"}
+mypy = "^0.971"
 
 [tool.black]
 line-length = 88
@@ -37,6 +39,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.scriv]
 format = "md"
 version = "literal: pyproject.toml: tool.poetry.version"
+
+[tool.mypy]
+ignore_missing_imports = "True"
 
 [tool.coverage.report]
 exclude_lines = ["if __name__ == .__main__.:"]

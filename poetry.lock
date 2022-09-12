@@ -319,6 +319,24 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "mypy"
+version = "0.971"
+description = "Optional static typing for Python"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+mypy-extensions = ">=0.4.3"
+tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
+typing-extensions = ">=3.10"
+
+[package.extras]
+dmypy = ["psutil (>=4.0)"]
+python2 = ["typed-ast (>=1.4.0,<2)"]
+reports = ["lxml"]
+
+[[package]]
 name = "mypy-extensions"
 version = "0.4.3"
 description = "Experimental type system extensions for programs checked with the mypy typechecker."
@@ -448,6 +466,21 @@ description = "Python style guide checker"
 category = "dev"
 optional = false
 python-versions = ">=3.6"
+
+[[package]]
+name = "pydantic"
+version = "1.10.2"
+description = "Data validation and settings management using python type hints"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+typing-extensions = ">=4.1.0"
+
+[package.extras]
+dotenv = ["python-dotenv (>=0.10.4)"]
+email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pyflakes"
@@ -620,7 +653,7 @@ testing = ["flaky (>=3.4.0)", "freezegun (>=0.3.11)", "pytest (>=4.0.0)", "pytes
 name = "typing-extensions"
 version = "4.3.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -677,7 +710,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "4f0468101e3d96ef4d866cbdd6ab77d2745dfd25d896e2fb888630c9b78aed53"
+content-hash = "8430b24cf9ff5d5e204cfc9c913114514753cb79c11d0f2c7ba9829e38013d93"
 
 [metadata.files]
 atomicwrites = []
@@ -707,6 +740,7 @@ markupsafe = []
 matplotlib = []
 mccabe = []
 more-itertools = []
+mypy = []
 mypy-extensions = []
 nodeenv = []
 numpy = []
@@ -719,6 +753,7 @@ pluggy = []
 pre-commit = []
 py = []
 pycodestyle = []
+pydantic = []
 pyflakes = []
 pyparsing = []
 pytest = []

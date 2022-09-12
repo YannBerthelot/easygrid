@@ -34,3 +34,9 @@ repos:
       - id: pylint
         exclude: tests/ # Prevent files in tests/ to be passed in to pylint.
         args: ["--rcfile=.pylintrc"] # Link to your config file
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v0.971" # Use the sha / tag you want to point at
+    hooks:
+      - id: mypy
+        args: [--no-strict-optional, --ignore-missing-imports]

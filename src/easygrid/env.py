@@ -9,6 +9,7 @@ import gym
 import numpy as np
 
 from easygrid.microgrid import Action, Microgrid
+from easygrid.types import MicrogridConfig
 
 # from gym import spaces
 
@@ -35,7 +36,7 @@ class GridEnv(gym.Env):
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: MicrogridConfig) -> None:
 
         """
         Creates the relevant attributes based on the config
@@ -115,5 +116,5 @@ class GridEnv(gym.Env):
         Returns:
             float: The reward/cost
         """
-        reward = None
+        reward = 0.0
         return reward
