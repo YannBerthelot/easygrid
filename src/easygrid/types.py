@@ -22,13 +22,13 @@ class NumpyNDArray(np.ndarray):
         return v
 
 
-class Action(BaseModel):
-    """
-    This TypedDict represents the action template to be fed to the microgrid
-    """
+# class Action(BaseModel):
+#     """
+#     This TypedDict represents the action template to be fed to the microgrid
+#     """
 
-    battery: float
-    grid: float
+#     battery: float
+#     grid: float
 
 
 class BatteryConfig(BaseModel):

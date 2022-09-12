@@ -9,7 +9,7 @@ import gym
 import numpy as np
 from gym import spaces
 
-from easygrid.microgrid import Action, Microgrid
+from easygrid.microgrid import Microgrid
 from easygrid.types import MicrogridConfig
 
 # from gym import spaces
@@ -47,14 +47,15 @@ class GridEnv(gym.Env):
         """
         super().__init__()
         self.microgrid = Microgrid(config)
-        actions_dim = len(Action.__dict__["__fields__"])
         self.observation_space = spaces.Box(
             low=self.microgrid.min_values,
             high=self.microgrid.max_values,
             dtype=np.float32,
         )
         self.action_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(actions_dim,), dtype=np.float32
+            low=self.microgrid.min_actions,
+            high=self.microgrid.max_actions,
+            dtype=np.float32,
         )
 
     @property
@@ -65,13 +66,13 @@ class GridEnv(gym.Env):
         """
         return self.microgrid.config
 
-    def step(self, action: Action) -> Tuple[np.ndarray, float, bool, str]:
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, str]:
         """
         Executes the action given by the agent (or something else) and \
         returns information about the state of the environment and reward
 
         Args:
-            action (Action): The action to be processed by the environment,\
+            action (np.ndarray): The action to be processed by the environment,\
                  it should contain:
                 - How much to store/discharge in the battery (float)
                 - How much to sell/buy from the grid (float)

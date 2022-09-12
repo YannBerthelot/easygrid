@@ -1,7 +1,6 @@
 import numpy as np
 
 from easygrid.types import (
-    Action,
     BatteryConfig,
     GridConfig,
     LoadConfig,
@@ -9,7 +8,9 @@ from easygrid.types import (
     PvConfig,
 )
 
-action = Action.parse_obj({"battery": 1000, "grid": 1000})
+battery = 1000
+grid = 1000
+action = np.array([battery, grid])
 
 CAPACITY = 1e5
 MAX_TIMESTEP = int(1e3)

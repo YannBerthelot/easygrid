@@ -9,7 +9,6 @@ import numpy as np
 
 from easygrid.data.data_utils import DATA_FOLDER, get_indexes
 from easygrid.types import (
-    Action,
     BatteryConfig,
     GridConfig,
     LoadConfig,
@@ -99,13 +98,13 @@ class Microgrid:
         return min(self.load.__len__, self.pv.__len__, self.grid.__len__)
 
     def run_timestep(
-        self, action: Action, logging: bool = True
+        self, action: np.ndarray, logging: bool = True
     ) -> Tuple[np.ndarray, bool, Tuple[float, float, float]]:
         """
         Executes the action on the microgrid and computes the following state
 
         Args:
-            action (Action): The action to be processed by the environment,\
+            action (np.ndarray): The action to be processed by the environment,\
                  it should contain:
                 - How much to store/discharge in the battery (float)
                 - How much to sell/buy from the grid (float)
@@ -113,9 +112,14 @@ class Microgrid:
         Returns:
             Tuple[np.ndarray, bool]: The next state and terminal state flag
         """
+        # We need to cast to pydantic here as it connects to gym, and gym \
+        # gives a np.array from the sample methods
+        # if not (isinstance(action, Action)):
+        #     action_dict = {"battery": action[0], "grid": action[1]}
+        #     action = Action.parse_obj(action_dict)
         self.t += 1
-        energy_battery = action.battery
-        energy_grid = action.grid
+        energy_battery = action[0]
+        energy_grid = action[1]
         energy_pv = self.pv.get_power(self.t) * self.delta_t
         energy_load = self.load.get_load(self.t) * self.delta_t
         energy_balance = energy_pv + energy_grid - energy_load - energy_battery
@@ -271,7 +275,7 @@ class Microgrid:
         Get the min possible values for all observations
 
         Returns:
-            Tuple[float, float, float, float, float]: The min values
+            np.ndarray[float, float, float, float, float]: The min values
         """
 
         return np.array(
@@ -286,13 +290,40 @@ class Microgrid:
         )
 
     @property
+    def max_actions(self) -> np.ndarray:
+        """
+        Get the max possible values for all actions
+
+        Returns:
+            np.ndarray: max value for each action
+        """
+
+        return np.array(
+            [
+                self.battery.capacity,
+                self.battery.capacity + self.load.load_ts.max(),
+            ],
+            dtype=np.float32,
+        )
+
+    @property
+    def min_actions(self) -> np.ndarray:
+        """
+        Get the min possible values for all actions
+
+        Returns:
+            np.ndarray: min value for each action
+        """
+        return -self.max_actions
+
+    @property
     def done(self) -> bool:
         """
         Returns:
             bool: Wether or not the microgrid is in a final state
         """
         return (
-            self.t >= self.MAX_TIMESTEP - 1
+            self.t >= self.MAX_TIMESTEP - 2
         )  # to allow to see the upcoming prices and load before taking action
 
     def print_info(self):
