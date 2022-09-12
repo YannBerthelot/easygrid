@@ -292,7 +292,7 @@ class Microgrid:
     @property
     def max_actions(self) -> np.ndarray:
         """
-        Get the max possible values for all actions
+        Define the max possible values for all actions
 
         Returns:
             np.ndarray: max value for each action
@@ -301,7 +301,13 @@ class Microgrid:
         return np.array(
             [
                 self.battery.capacity,
+                # We shouldn't be charging or dischargming more than max
+                # capacity at anypoint. Even below it's already too
+                # much due to limit in output.
                 self.battery.capacity + self.load.load_ts.max(),
+                # We assume that the max amount of energy
+                # that can be bought is full battery + max of load
+                # accross the full time serie.
             ],
             dtype=np.float32,
         )
@@ -314,6 +320,7 @@ class Microgrid:
         Returns:
             np.ndarray: min value for each action
         """
+        # same as for max but in terms of selling/discharging
         return -self.max_actions
 
     @property
@@ -322,9 +329,9 @@ class Microgrid:
         Returns:
             bool: Wether or not the microgrid is in a final state
         """
-        return (
-            self.t >= self.MAX_TIMESTEP - 2
-        )  # to allow to see the upcoming prices and load before taking action
+        return self.t >= self.MAX_TIMESTEP - 2
+        # to allow to see the upcoming prices and load before taking action (-1)
+        # and since self.t starts at 0, another -1
 
     def print_info(self):
         """
