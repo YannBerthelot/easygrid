@@ -11,11 +11,8 @@ def main():
     """
     env = GridEnv(mg_config)
     done = False
-    i = 0
     while not done:
-        print(i)
         _, _, done, _ = env.step(env.action_space.sample())
-        i += 1
     env.microgrid.show_logs()
 
 
