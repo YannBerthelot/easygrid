@@ -1,4 +1,22 @@
 
+<a id='changelog-0.3.0'></a>
+# 0.3.0 — 2022-09-12
+
+## Removed
+
+- Remove "Action" type as it would be too heavy to cast at every timestep, plus input is np.array
+
+## Added
+
+- Added mypy to the pipeline for type checking)
+- Extended the gym env to init spaces (action and obs).
+- Encapsulate the microgrid into a working gym environment.
+
+## Changed
+
+- Switched typing to using pydantic.
+- Changed example to gym
+
 <a id='changelog-0.1.9'></a>
 # 0.1.9 — 2022-09-07
 
