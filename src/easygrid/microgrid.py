@@ -1,14 +1,20 @@
 """
 This module creates thhe microgrid object
 """
-
-from typing import List, Tuple, Union
+import json
+from typing import List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from easygrid.data.data_utils import DATA_FOLDER, get_indexes
-from easygrid.types import Action, BatteryConfig, GridConfig, LoadConfig, PvConfig
+from easygrid.types import (
+    BatteryConfig,
+    GridConfig,
+    LoadConfig,
+    MicrogridConfig,
+    PvConfig,
+)
 
 
 class Microgrid:
@@ -30,28 +36,27 @@ class Microgrid:
     """
 
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: MicrogridConfig) -> None:
         """
         Creates the relevant attributes based on the config
 
         Args:
             config (dict): Configuration for the underlying microgrid.
         """
-        battery_config: BatteryConfig = config["BATTERY"]
-        grid_config: GridConfig = config["GRID"]
-        pv_config: PvConfig = config["PV"]
-        load_config: LoadConfig = config["LOAD"]
+        # battery_config: BatteryConfig = config.battery
+        # grid_config: GridConfig = config.grid
+        # pv_config: PvConfig = config.pv
+        # load_config: LoadConfig = config.load
         self.indexes = get_indexes(data_folder=DATA_FOLDER)
 
-        self.battery = Battery(battery_config)
-        self.grid = Grid(grid_config)
-        self.pv = Photovoltaic(pv_config)
-        self.load = Load(load_config)
+        self.battery = Battery(config.battery)
+        self.grid = Grid(config.grid)
+        self.pv = Photovoltaic(config.pv)
+        self.load = Load(config.load)
 
-        mg_config = config["MICROGRID"]  # flor clarity purposes
-        self.overproduction_penalty = mg_config["overprod_penalty"]
-        self.underproduction_penalty = mg_config["underprod_penalty"]
-        self.MAX_TIMESTEP = mg_config["max_timestep"]
+        self.overproduction_penalty = config.overprod_penalty
+        self.underproduction_penalty = config.underprod_penalty
+        self.MAX_TIMESTEP = config.max_timestep
 
         self.t = 0
         self.delta_t = 1
@@ -70,35 +75,36 @@ class Microgrid:
             )
 
     @property
-    def config(self) -> dict:
+    def config(self) -> MicrogridConfig:
         """
         Returns:
             dict: The current microgrid config
         """
-        return {
-            "battery": self.battery.config,
-            "grid": self.grid.config,
-            "load": self.load.config,
-            "pv": self.pv.config,
-            "microgrid": {
+        config = MicrogridConfig.parse_obj(
+            {
+                "battery": self.battery.config,
+                "grid": self.grid.config,
+                "load": self.load.config,
+                "pv": self.pv.config,
                 "overprod_penalty": self.overproduction_penalty,
                 "underprod_penalty": self.underproduction_penalty,
                 "max_timestep": self.MAX_TIMESTEP,
-            },
-        }
+            }
+        )
+        return config
 
     @property
     def __len__(self):
         return min(self.load.__len__, self.pv.__len__, self.grid.__len__)
 
     def run_timestep(
-        self, action: Action, logging: bool = True
-    ) -> Tuple[np.ndarray, bool]:
+        self, action: np.ndarray, logging: bool = True
+    ) -> Tuple[np.ndarray, bool, Tuple[float, float, float]]:
         """
         Executes the action on the microgrid and computes the following state
 
         Args:
-            action (Action): The action to be processed by the environment,\
+            action (np.ndarray): The action to be processed by the environment,\
                  it should contain:
                 - How much to store/discharge in the battery (float)
                 - How much to sell/buy from the grid (float)
@@ -106,10 +112,14 @@ class Microgrid:
         Returns:
             Tuple[np.ndarray, bool]: The next state and terminal state flag
         """
+        # We need to cast to pydantic here as it connects to gym, and gym \
+        # gives a np.array from the sample methods
+        # if not (isinstance(action, Action)):
+        #     action_dict = {"battery": action[0], "grid": action[1]}
+        #     action = Action.parse_obj(action_dict)
         self.t += 1
-
-        energy_battery = action["battery"]
-        energy_grid = action["grid"]
+        energy_battery = action[0]
+        energy_grid = action[1]
         energy_pv = self.pv.get_power(self.t) * self.delta_t
         energy_load = self.load.get_load(self.t) * self.delta_t
         energy_balance = energy_pv + energy_grid - energy_load - energy_battery
@@ -118,13 +128,13 @@ class Microgrid:
         overcharge_cost = self.battery.get_overcharge_cost(overcharge)
         grid_cost = self.grid.get_cost(self.t, energy_grid)
         error_cost = self.get_error_cost(energy_balance)
-
+        costs = (overcharge_cost, grid_cost, error_cost)
         if logging:
             self.log_energies(
                 energy_battery, energy_grid, energy_pv, energy_load, energy_balance
             )
-            self.log_costs(overcharge_cost, grid_cost, error_cost)
-        return self.obs, self.done
+            self.log_costs(*costs)
+        return self.obs, self.done, costs
 
     def get_error_cost(self, energy_balance: float) -> float:
         """
@@ -196,7 +206,7 @@ class Microgrid:
         """
         return {"costs": self.costs, "energies": self.energies}
 
-    def show_logs(self, show=True) -> Union[None, Tuple[plt.Axes]]:
+    def show_logs(self, show=True) -> Union[None, List[plt.Axes]]:
         """
         Plot the available logs in a simple fashion.
 
@@ -221,6 +231,7 @@ class Microgrid:
                 figures.append(fig)
         if not show:
             return figures
+        return None
 
     @property
     def obs(self) -> np.ndarray:
@@ -228,7 +239,89 @@ class Microgrid:
         Returns:
             np.ndarray: The current state of the microgrid
         """
-        return np.array([self.battery.state_of_charge])
+        return np.array(
+            [
+                self.battery.state_of_charge,
+                self.grid.import_prices[self.t + 1],
+                self.grid.export_prices[self.t + 1],
+                self.load.get_load(self.t + 1),
+                self.pv.get_power(self.t + 1),
+            ]
+        )
+
+    @property
+    def max_values(self) -> np.ndarray:
+        """
+        Get the max possible values for all observations
+
+        Returns:
+            Tuple[float, float, float, float, float]: The max values
+        """
+
+        return np.array(
+            [
+                1.0,
+                self.grid.import_prices.max(),
+                self.grid.export_prices.max(),
+                self.load.load_ts.max(),
+                self.pv.pv_production_ts.max(),
+            ],
+            dtype=np.float32,
+        )
+
+    @property
+    def min_values(self) -> np.ndarray:
+        """
+        Get the min possible values for all observations
+
+        Returns:
+            np.ndarray[float, float, float, float, float]: The min values
+        """
+
+        return np.array(
+            [
+                0.0,
+                self.grid.import_prices.min(),
+                self.grid.export_prices.min(),
+                self.load.load_ts.min(),
+                self.pv.pv_production_ts.min(),
+            ],
+            dtype=np.float32,
+        )
+
+    @property
+    def max_actions(self) -> np.ndarray:
+        """
+        Define the max possible values for all actions
+
+        Returns:
+            np.ndarray: max value for each action
+        """
+
+        return np.array(
+            [
+                self.battery.capacity,
+                # We shouldn't be charging or dischargming more than max
+                # capacity at anypoint. Even below it's already too
+                # much due to limit in output.
+                self.battery.capacity + self.load.load_ts.max(),
+                # We assume that the max amount of energy
+                # that can be bought is full battery + max of load
+                # accross the full time serie.
+            ],
+            dtype=np.float32,
+        )
+
+    @property
+    def min_actions(self) -> np.ndarray:
+        """
+        Get the min possible values for all actions
+
+        Returns:
+            np.ndarray: min value for each action
+        """
+        # same as for max but in terms of selling/discharging
+        return -self.max_actions
 
     @property
     def done(self) -> bool:
@@ -236,7 +329,9 @@ class Microgrid:
         Returns:
             bool: Wether or not the microgrid is in a final state
         """
-        return self.t >= self.MAX_TIMESTEP
+        return self.t >= self.MAX_TIMESTEP - 2
+        # to allow to see the upcoming prices and load before taking action (-1)
+        # and since self.t starts at 0, another -1
 
     def print_info(self):
         """
@@ -247,14 +342,22 @@ class Microgrid:
         """
         raise NotImplementedError
 
-    def reset(self):
+    def reset(self, reset_logs=False) -> np.ndarray:
         """
-        TBD
+        Reset the microgrid in its original state.
 
-        Raises:
-            NotImplementedError: _description_
+        Args:
+            reset_logs (bool, optional): Wether or not to reset the log arrays.\
+                Defaults to False.
+
+        Returns:
+            np.ndarray: The initial observation of the environment
         """
-        raise NotImplementedError
+        self.t = 0
+        self.battery.reset()
+        if reset_logs:
+            self._init_logs_()
+        return self.obs
 
     def set_battery_from_duration(self, nb_of_hours: float) -> None:
         """
@@ -263,7 +366,12 @@ class Microgrid:
         Args:
             nb_of_hours (float): The capacity of the battery in hours
         """
-        self.battery.capacity = self.load.__mean__ * nb_of_hours
+        new_capacity = self.load.__mean__ * nb_of_hours
+        self.battery.initial_energy = (
+            new_capacity / self.battery.capacity
+        ) * self.battery.initial_energy
+        self.battery.capacity = new_capacity
+        self.battery.reset()
         self.battery.max_output = max(self.battery.max_output, self.load.__mean__)
 
     # def set_pv_from_load(self, nb_of_hours: float) -> None:
@@ -273,6 +381,13 @@ class Microgrid:
     #         nb_of_hours (float): The capacity of the battery in hours
     #     """
     #     self.battery.capacity = self.load.__mean__ * nb_of_hours
+
+    def save_config(self, file_name="./config.json"):
+        """
+        Save the current config to a json fille.
+        """
+        with open(file_name, "w", encoding="utf-8") as json_file:
+            json.dump(self.config.json(), json_file)
 
 
 class Battery:
@@ -317,13 +432,20 @@ class Battery:
         Args:
             battery_config (BatteryConfig): Configuration for the battery.
         """
-        self.capacity = battery_config["capacity"]
-        self.high_capacity = battery_config["high_capacity"]
-        self.low_capacity = battery_config["low_capacity"]
-        self.max_output = battery_config["max_output"]
-        self.min_output = battery_config["min_output"]
-        self._energy = battery_config["initial_energy"]
-        self.overcharge_penalty = battery_config["overcharge_penalty"]
+        self.capacity = battery_config.capacity
+        self.high_capacity = battery_config.high_capacity
+        self.low_capacity = battery_config.low_capacity
+        self.max_output = battery_config.max_output
+        self.min_output = battery_config.min_output
+        self._energy = battery_config.initial_energy
+        self.initial_energy = battery_config.initial_energy
+        self.overcharge_penalty = battery_config.overcharge_penalty
+
+    def reset(self):
+        """
+        Reset the battery energy/soc to the initial setting
+        """
+        self._energy = self.initial_energy
 
     @property
     def config(self) -> dict:
@@ -339,6 +461,7 @@ class Battery:
             "max_output": self.max_output,
             "min_output": self.min_output,
             "overcharge_penalty": self.overcharge_penalty,
+            "initial_energy": self.initial_energy,
         }
 
     @property
@@ -355,7 +478,7 @@ class Battery:
         return soc
 
     @property
-    def energy(self) -> float:
+    def energy(self) -> Optional[float]:
         """
         Returns:
             float: The current energy quantity stored in the battery
@@ -434,14 +557,10 @@ class Grid:
         Args:
             grid_config (GridConfig): Configuration for the grid.
         """
-        self.import_prices_ = grid_config["import_prices"]
-        self.export_prices_ = grid_config["export_prices"]
-        self.import_price_factor = 1
-        self.export_price_factor = 1
-        if "import_price_factor" in grid_config.keys():
-            self.import_price_factor = grid_config["import_price_factor"]
-        if "export_price_factor" in grid_config.keys():
-            self.export_price_factor = grid_config["export_price_factor"]
+        self.import_prices_ = grid_config.import_prices
+        self.export_prices_ = grid_config.export_prices
+        self.import_price_factor = grid_config.import_price_factor
+        self.export_price_factor = grid_config.export_price_factor
 
         if len(self.import_prices) != len(self.export_prices):
             raise ValueError(
@@ -489,7 +608,7 @@ class Grid:
         return len(self.import_prices)
 
     @property
-    def import_prices(self) -> Union[List[float], np.ndarray]:
+    def import_prices(self) -> np.ndarray:
         """
         Returns:
             int: The length of prices series for safety checks
@@ -497,7 +616,7 @@ class Grid:
         return self.import_prices_ * self.import_price_factor
 
     @property
-    def export_prices(self) -> Union[List[float], np.ndarray]:
+    def export_prices(self) -> np.ndarray:
         """
         Returns:
             int: The length of prices series for safety checks
@@ -531,10 +650,8 @@ class Photovoltaic:
         Args:
             pv_config (PvConfig): Configuration for the PV.
         """
-        self.pv_production_ts_ = pv_config["pv_production_ts"]
-        self.production_factor = 1
-        if "production_factor" in pv_config.keys():
-            self.production_factor = pv_config["production_factor"]
+        self.pv_production_ts_ = pv_config.pv_production_ts
+        self.production_factor = pv_config.production_factor
 
     @property
     def config(self) -> dict:
@@ -549,12 +666,12 @@ class Photovoltaic:
         }
 
     @property
-    def pv_production_ts(self) -> Union[List[float], np.ndarray]:
+    def pv_production_ts(self) -> np.ndarray:
         """
         Returns:
             Union[List[float], np.ndarray]: The production timeserie rescaled.
         """
-        return np.array(self.pv_production_ts_) * self.production_factor
+        return self.pv_production_ts_ * self.production_factor
 
     @property
     def __len__(self) -> int:
@@ -612,10 +729,8 @@ class Load:
         Args:
             load_config (LoadConfig): Configuration for the load.
         """
-        self.load_ts_ = load_config["load_ts"]
+        self.load_ts_ = load_config.load_ts
         self.load_factor = 1.0
-        if "load_factor" in load_config.keys():
-            self.load_factor = load_config["load_factor"]
 
     @property
     def config(self) -> dict:
@@ -629,12 +744,12 @@ class Load:
         }
 
     @property
-    def load_ts(self) -> Union[List[float], np.ndarray]:
+    def load_ts(self) -> np.ndarray:
         """
         Returns:
             Union[List[float], np.ndarray]: The load timeserie rescaled.
         """
-        return np.array(self.load_ts_) * self.load_factor
+        return self.load_ts_ * self.load_factor
 
     @property
     def __len__(self) -> int:

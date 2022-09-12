@@ -1,5 +1,24 @@
+<a id='changelog-0.3.0'></a>
+
+# 0.3.0 — 2022-09-12
+
+## Removed
+
+- Remove "Action" type as it would be too heavy to cast at every timestep, plus input is np.array
+
+## Added
+
+- Added mypy to the pipeline for type checking)
+- Extended the gym env to init spaces (action and obs).
+- Encapsulate the microgrid into a working gym environment.
+
+## Changed
+
+- Switched typing to using pydantic.
+- Changed example to gym
 
 <a id='changelog-0.1.9'></a>
+
 # 0.1.9 — 2022-09-07
 
 ## Added
@@ -15,6 +34,7 @@
 - Version number tracking is now handled in pyproject.toml entirely
 
 <a id='changelog-0.1.9'></a>
+
 # 0.1.9 — 2022-09-01
 
 ## Added
@@ -24,7 +44,7 @@
 ## Changed
 
 - Modified tests to prevent graphs from showing
-<a id='changelog-0.1.8'></a>
+  <a id='changelog-0.1.8'></a>
 
 # 0.1.8 — 2022-08-14
 
@@ -46,28 +66,19 @@
 
 - Added basic PV functionnalities (including production scaling).
 
-## Changed
-
-- Changed minimum coverage to 100%.
-- Add scaling factor to prices (import and export) in Grid object.
-- Changed line limit to 88 characters for isort and black.
-
-## Fixed
-
-- Fixed incapacity to have 100% coverage due to an assert statement
-
-<a id='changelog-0.1.2'></a>
-
-# 0.1.2 — 2022-08-13
-
-## Added
-
 - Types files for collecting different custom types
 - Grid class to represent the grid object for importing/exporting operations
 
 ## Changed
 
+- Changed minimum coverage to 100%.
+- Add scaling factor to prices (import and export) in Grid object.
+- Changed line limit to 88 characters for isort and black.
 - Changed from Python 3.8 to Python 3.9 for type subscription
+
+## Fixed
+
+- Fixed incapacity to have 100% coverage due to an assert statement
 
 <a id='changelog-0.1.2'></a>
 
@@ -76,17 +87,6 @@
 ## Added
 
 - Added CI for automatic publication to Test PyPi
-
-## Fixed
-
-- Fixed Coverage support on CI github actions
-
-<a id='changelog-0.1.2'></a>
-
-# 0.1.2 — 2022-08-04
-
-## Added
-
 - Added pylint config to the repo for easier consistency between CI and local env.
 - Docstrings for Microgrid and Battery
 - Added reward function template
@@ -97,4 +97,22 @@
 
 ## Fixed
 
+- Fixed Coverage support on CI github actions
 - Fixed a bug where discharging meant charging the battery
+
+<a id='changelog-0.1.2'></a>
+
+# 2022-08-02
+
+## Added
+
+- Added tox for quality checks
+- Added more tests
+- Added test coverage check and set it to 95% coverage
+- Scriv to track changes in the changelog
+- Basic battery implementation
+- Basic battery tests
+
+## Changed
+
+- Switch to only supporting python3.8, at least for now

@@ -1,4 +1,5 @@
 import copy
+import os
 from unittest.mock import patch
 
 import numpy as np
@@ -6,15 +7,15 @@ import pytest
 
 from easygrid.__main__ import main
 from easygrid.microgrid import Battery, Grid, Load, Microgrid, Photovoltaic
-from easygrid.types import GridConfig
+from easygrid.types import GridConfig, PvConfig
 
 from .config import (
     MAX_TIMESTEP,
     action,
     battery_config,
-    config,
     grid_config,
     load_config,
+    mg_config,
     pv_config,
 )
 
@@ -25,28 +26,34 @@ def test_main(mock_show):
 
 
 def test_microgrid():
-    mg = Microgrid(config)
+    mg = Microgrid(mg_config)
     mg.run_timestep(action, logging=True)
     mg.run_timestep(action, logging=False)
     with pytest.raises(NotImplementedError):
         mg.print_info()
-    with pytest.raises(NotImplementedError):
-        mg.reset()
-    faulty_grid_config: GridConfig = {
-        "import_prices": np.random.randint(5, size=MAX_TIMESTEP - 1),
-        "export_prices": np.random.randint(5, size=MAX_TIMESTEP - 1),
-    }
-    faulty_config = copy.deepcopy(config)
-    faulty_config["GRID"] = faulty_grid_config
+    faulty_grid_config = GridConfig.parse_obj(
+        {
+            "import_prices": np.random.randint(5, size=MAX_TIMESTEP - 5),
+            "export_prices": np.random.randint(5, size=MAX_TIMESTEP - 5),
+        }
+    )
+    faulty_config = copy.deepcopy(mg_config)
+    faulty_config.grid = faulty_grid_config
     with pytest.raises(ValueError):
         faulty_mg = Microgrid(faulty_config)
+        print(len(faulty_config["grid"]["import_prices"]))
+        print(len(faulty_mg.grid.import_prices_))
+        print(faulty_mg.grid.__len__)
+        print(faulty_mg.MAX_TIMESTEP)
         faulty_mg
 
-    faulty_pv_config: GridConfig = {
-        "pv_production_ts": np.random.randint(5, size=MAX_TIMESTEP - 1),
-    }
-    faulty_config = copy.deepcopy(config)
-    faulty_config["PV"] = faulty_pv_config
+    faulty_pv_config = PvConfig.parse_obj(
+        {
+            "pv_production_ts": np.random.randint(5, size=MAX_TIMESTEP - 5),
+        }
+    )
+    faulty_config = copy.deepcopy(mg_config)
+    faulty_config.pv = faulty_pv_config
     with pytest.raises(ValueError):
         faulty_mg = Microgrid(faulty_config)
         faulty_mg
@@ -59,6 +66,15 @@ def test_microgrid():
     duration = 10
     mg.set_battery_from_duration(duration)
     assert mg.battery.capacity == mg.load.__mean__ * duration
+    mg.reset()
+    assert mg.t == 0
+    mg.reset(reset_logs=True)
+    assert len(mg.costs["overcharge"]) == 0
+    # check that config file is created
+    config_file_name = os.path.join(os.path.dirname(__file__), "config.json")
+    mg.save_config(config_file_name)
+    assert os.path.exists(config_file_name)
+    os.remove(config_file_name)
 
 
 def test_battery():
@@ -94,10 +110,12 @@ def test_grid():
     assert grid.get_cost(energy=1e3, t=np.random.randint(grid.__len__)) >= 0
     assert grid.get_cost(energy=-1e3, t=np.random.randint(grid.__len__)) <= 0
     assert grid.get_cost(energy=0, t=np.random.randint(grid.__len__)) == 0
-    faulty_config: GridConfig = {
-        "import_prices": np.random.randn(MAX_TIMESTEP),
-        "export_prices": np.random.randn(MAX_TIMESTEP - 1),
-    }
+    faulty_config = GridConfig.parse_obj(
+        {
+            "import_prices": np.random.randn(MAX_TIMESTEP),
+            "export_prices": np.random.randn(MAX_TIMESTEP - 1),
+        }
+    )
     with pytest.raises(ValueError):
         faulty_grid = Grid(faulty_config)
         faulty_grid

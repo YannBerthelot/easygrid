@@ -1,25 +1,19 @@
 """
-Example of operating the microgrid
+Example of operating the microgrid using gym environment
 """
-import numpy as np
-
-from easygrid.config.pymgrid_config import config
-from easygrid.microgrid import Microgrid
-from easygrid.types import Action
+from easygrid.config.pymgrid_config import mg_config
+from easygrid.env import GridEnv
 
 
 def main():
     """
     Example of microgrid operation
     """
-    mg = Microgrid(config)
-    for _ in range(mg.__len__ - 1):
-        action: Action = {
-            "battery": 0,
-            "grid": np.random.randint(1e3),
-        }
-        mg.run_timestep(action)
-    mg.show_logs()
+    env = GridEnv(mg_config)
+    done = False
+    while not done:
+        _, _, done, _ = env.step(env.action_space.sample())
+    env.microgrid.show_logs()
 
 
 if __name__ == "__main__":
