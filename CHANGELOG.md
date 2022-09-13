@@ -1,4 +1,11 @@
 
+<a id='changelog-0.4.0'></a>
+# 0.4.0 — 2022-09-13
+
+## Changed
+
+- Switched to gym 0.21 for stable-baselines3 compatibility
+
 <a id='changelog-0.3.0'></a>
 # 0.3.0 — 2022-09-13
 
