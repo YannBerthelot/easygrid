@@ -61,3 +61,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 - Add more tests to the simulation
 - Add CLI parsing (if necessary)
 - Optimize efficiency of code for fast simulations
+- Add timeseries creators.
