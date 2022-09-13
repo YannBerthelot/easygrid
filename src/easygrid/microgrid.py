@@ -1,13 +1,12 @@
 """
 This module creates thhe microgrid object
 """
-import json
 from typing import List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from easygrid.data.data_utils import DATA_FOLDER, get_indexes
+from easygrid.data.data_utils import DATA_FOLDER, get_indexes, load_data
 from easygrid.types import (
     BatteryConfig,
     GridConfig,
@@ -63,15 +62,21 @@ class Microgrid:
 
         self._init_logs_()
 
-        if self.grid.__len__ < self.MAX_TIMESTEP:
+        if self.grid.__len__ != self.MAX_TIMESTEP:
             raise ValueError(
-                f"Prices timeseries are shorter ({self.grid.__len__ }) than \
+                f"Prices timeseries lengths are different ({self.grid.__len__ }) with \
                     the maximum number of timesteps ({self.MAX_TIMESTEP})"
             )
-        if self.pv.__len__ < self.MAX_TIMESTEP:
+        if self.pv.__len__ != self.MAX_TIMESTEP:
             raise ValueError(
-                f"PV production timeseries are shorter ({self.pv.__len__ }) \
-                    than the maximum number of timesteps ({self.MAX_TIMESTEP})"
+                f"PV production timeseries length is different ({self.pv.__len__ }) \
+                    with the maximum number of timesteps ({self.MAX_TIMESTEP})"
+            )
+
+        if self.load.__len__ != self.MAX_TIMESTEP:
+            raise ValueError(
+                f"PV production timeseries length is different ({self.pv.__len__ }) \
+                    with the maximum number of timesteps ({self.MAX_TIMESTEP})"
             )
 
     @property
@@ -387,7 +392,7 @@ class Microgrid:
         Save the current config to a json fille.
         """
         with open(file_name, "w", encoding="utf-8") as json_file:
-            json.dump(self.config.json(), json_file)
+            json_file.write(self.config.json(indent=4, sort_keys=True))
 
 
 class Battery:
@@ -454,15 +459,17 @@ class Battery:
         Returns:
             dict: The current battery config
         """
-        return {
-            "capacity": self.capacity,
-            "high_capacity": self.high_capacity,
-            "low_capacity": self.low_capacity,
-            "max_output": self.max_output,
-            "min_output": self.min_output,
-            "overcharge_penalty": self.overcharge_penalty,
-            "initial_energy": self.initial_energy,
-        }
+        return BatteryConfig.parse_obj(
+            {
+                "capacity": self.capacity,
+                "high_capacity": self.high_capacity,
+                "low_capacity": self.low_capacity,
+                "max_output": self.max_output,
+                "min_output": self.min_output,
+                "overcharge_penalty": self.overcharge_penalty,
+                "initial_energy": self.initial_energy,
+            }
+        )
 
     @property
     def state_of_charge(self) -> float:
@@ -557,8 +564,9 @@ class Grid:
         Args:
             grid_config (GridConfig): Configuration for the grid.
         """
-        self.import_prices_ = grid_config.import_prices
-        self.export_prices_ = grid_config.export_prices
+        self.config_ = grid_config
+        self.import_prices_ = load_data(grid_config.import_prices)
+        self.export_prices_ = load_data(grid_config.export_prices)
         self.import_price_factor = grid_config.import_price_factor
         self.export_price_factor = grid_config.export_price_factor
 
@@ -575,12 +583,14 @@ class Grid:
         Returns:
             dict: The current grid config
         """
-        return {
-            "import_prices": self.import_prices,
-            "export_prices": self.export_prices,
-            "import_price_factor": self.import_price_factor,
-            "export_price_factor": self.export_price_factor,
-        }
+        return GridConfig.parse_obj(
+            {
+                "import_prices": self.config_.import_prices,
+                "export_prices": self.config_.export_prices,
+                "import_price_factor": self.import_price_factor,
+                "export_price_factor": self.export_price_factor,
+            }
+        )
 
     def get_cost(self, t: int, energy: float) -> float:
         """
@@ -650,7 +660,8 @@ class Photovoltaic:
         Args:
             pv_config (PvConfig): Configuration for the PV.
         """
-        self.pv_production_ts_ = pv_config.pv_production_ts
+        self.config_ = pv_config  # to fix path at init
+        self.pv_production_ts_ = load_data(pv_config.pv_production_ts)
         self.production_factor = pv_config.production_factor
 
     @property
@@ -660,10 +671,12 @@ class Photovoltaic:
         Returns:
             dict: The current pv config
         """
-        return {
-            "pv_production_ts": self.pv_production_ts,
-            "production_factor": self.production_factor,
-        }
+        return PvConfig.parse_obj(
+            {
+                "pv_production_ts": self.config_.pv_production_ts,
+                "production_factor": self.production_factor,
+            }
+        )
 
     @property
     def pv_production_ts(self) -> np.ndarray:
@@ -729,7 +742,8 @@ class Load:
         Args:
             load_config (LoadConfig): Configuration for the load.
         """
-        self.load_ts_ = load_config.load_ts
+        self.config_ = load_config
+        self.load_ts_ = load_data(load_config.load_ts)
         self.load_factor = 1.0
 
     @property
@@ -738,10 +752,12 @@ class Load:
         Returns:
             dict: The current load config
         """
-        return {
-            "load_ts": self.load_ts,
-            "load_factor": self.load_factor,
-        }
+        return LoadConfig.parse_obj(
+            {
+                "load_ts": self.config_.load_ts,
+                "load_factor": self.load_factor,
+            }
+        )
 
     @property
     def load_ts(self) -> np.ndarray:

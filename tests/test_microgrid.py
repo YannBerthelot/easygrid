@@ -3,21 +3,24 @@ import os
 from unittest.mock import patch
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from easygrid.__main__ import main
-from easygrid.microgrid import Battery, Grid, Load, Microgrid, Photovoltaic
-from easygrid.types import GridConfig, PvConfig
-
-from .config import (
+from easygrid.config.pymgrid_config import (
     MAX_TIMESTEP,
-    action,
     battery_config,
     grid_config,
     load_config,
     mg_config,
     pv_config,
 )
+from easygrid.microgrid import Battery, Grid, Load, Microgrid, Photovoltaic
+from easygrid.types import GridConfig, LoadConfig, PvConfig
+
+battery = 1000
+grid = 1000
+action = np.array([battery, grid])
 
 
 @patch("matplotlib.pyplot.show")  # used to prevent displaying plots
@@ -31,25 +34,30 @@ def test_microgrid():
     mg.run_timestep(action, logging=False)
     with pytest.raises(NotImplementedError):
         mg.print_info()
+
+    faulty_import = os.path.join(os.path.dirname(__file__), "faulty_import.csv")
+    pd.Series(np.random.randint(5, size=MAX_TIMESTEP - 5)).to_csv(
+        faulty_import, index=False
+    )
+    faulty_export = os.path.join(os.path.dirname(__file__), "faulty_export.csv")
+    pd.Series(np.random.randint(5, size=MAX_TIMESTEP - 5)).to_csv(
+        faulty_export, index=False
+    )
     faulty_grid_config = GridConfig.parse_obj(
         {
-            "import_prices": np.random.randint(5, size=MAX_TIMESTEP - 5),
-            "export_prices": np.random.randint(5, size=MAX_TIMESTEP - 5),
+            "import_prices": faulty_import,
+            "export_prices": faulty_export,
         }
     )
+
     faulty_config = copy.deepcopy(mg_config)
     faulty_config.grid = faulty_grid_config
     with pytest.raises(ValueError):
         faulty_mg = Microgrid(faulty_config)
-        print(len(faulty_config["grid"]["import_prices"]))
-        print(len(faulty_mg.grid.import_prices_))
-        print(faulty_mg.grid.__len__)
-        print(faulty_mg.MAX_TIMESTEP)
-        faulty_mg
 
     faulty_pv_config = PvConfig.parse_obj(
         {
-            "pv_production_ts": np.random.randint(5, size=MAX_TIMESTEP - 5),
+            "pv_production_ts": faulty_import,
         }
     )
     faulty_config = copy.deepcopy(mg_config)
@@ -57,6 +65,18 @@ def test_microgrid():
     with pytest.raises(ValueError):
         faulty_mg = Microgrid(faulty_config)
         faulty_mg
+    pd.Series([1, 1]).to_csv("faulty_load.csv", index=False)
+    faulty_load_config = LoadConfig.parse_obj(
+        {
+            "load_ts": "faulty_load.csv",
+        }
+    )
+    faulty_config = copy.deepcopy(mg_config)
+    faulty_config.load = faulty_load_config
+    with pytest.raises(ValueError):
+        faulty_mg = Microgrid(faulty_config)
+        faulty_mg
+
     mg.get_error_cost(-1000)  # test error cost computation for negative energy
     mg.get_error_cost(1000)  # test error cost computation for positive energy
     mg.log_energies(1, 1, 1, 1)  # test auto balance computation
@@ -74,7 +94,8 @@ def test_microgrid():
     config_file_name = os.path.join(os.path.dirname(__file__), "config.json")
     mg.save_config(config_file_name)
     assert os.path.exists(config_file_name)
-    os.remove(config_file_name)
+    for file in ["faulty_load.csv", faulty_export, faulty_import, config_file_name]:
+        os.remove(file)
 
 
 def test_battery():
@@ -110,15 +131,25 @@ def test_grid():
     assert grid.get_cost(energy=1e3, t=np.random.randint(grid.__len__)) >= 0
     assert grid.get_cost(energy=-1e3, t=np.random.randint(grid.__len__)) <= 0
     assert grid.get_cost(energy=0, t=np.random.randint(grid.__len__)) == 0
+    faulty_import = os.path.join(os.path.dirname(__file__), "faulty_import.csv")
+    pd.Series(np.random.randint(5, size=MAX_TIMESTEP)).to_csv(
+        faulty_import, index=False
+    )
+    faulty_export = os.path.join(os.path.dirname(__file__), "faulty_export.csv")
+    pd.Series(np.random.randint(5, size=MAX_TIMESTEP - 1)).to_csv(
+        faulty_export, index=False
+    )
     faulty_config = GridConfig.parse_obj(
         {
-            "import_prices": np.random.randn(MAX_TIMESTEP),
-            "export_prices": np.random.randn(MAX_TIMESTEP - 1),
+            "import_prices": faulty_import,
+            "export_prices": faulty_export,
         }
     )
     with pytest.raises(ValueError):
         faulty_grid = Grid(faulty_config)
         faulty_grid
+    os.remove(faulty_import)
+    os.remove(faulty_export)
     assert grid.config is not None
 
 

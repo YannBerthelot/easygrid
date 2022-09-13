@@ -1,9 +1,8 @@
 import pytest
 
+from easygrid.config.pymgrid_config import mg_config
 from easygrid.env import GridEnv
 from easygrid.types import MicrogridConfig
-
-from .config import mg_config
 
 
 def test_env():

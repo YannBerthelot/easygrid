@@ -3,13 +3,15 @@ External data handling helpers
 """
 
 import os
+from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 DATA_FOLDER = os.path.dirname(__file__)
 
 
-def load_data(file: str) -> list:
+def load_data(path: Path) -> np.ndarray:
     """
     Read the data based on the file path
 
@@ -22,23 +24,11 @@ def load_data(file: str) -> list:
     Returns:
         list: _description_
     """
-    if not file.endswith(".csv"):
-        raise ValueError(f"The given path to file is not a csv file : {file}")
-    return pd.read_csv(file).values.flatten()
-
-
-def get_index(data_folder) -> list:
-    """
-    Create the index that lists the different files available
-
-    Returns:
-        list: _description_
-    """
-    return [
-        os.path.join(data_folder, f)
-        for f in os.listdir(data_folder)
-        if f.endswith(".csv")
-    ]
+    if not str(path).endswith(".csv"):
+        raise ValueError(f"The given path to file is not a csv file : {path}")
+    data = pd.read_csv(path)
+    assert len(data.columns) == 1
+    return np.array(data.values.flatten())
 
 
 def get_indexes(data_folder) -> dict:
@@ -62,3 +52,16 @@ def get_indexes(data_folder) -> dict:
     for directory in dirs:
         indexes[directory.split("/")[-1]] = get_index(directory)
     return indexes
+
+
+def get_index(data_folder) -> list:
+    """
+    Create the index that lists the different files available
+    Returns:
+        list: _description_
+    """
+    return [
+        os.path.join(data_folder, f)
+        for f in os.listdir(data_folder)
+        if f.endswith(".csv")
+    ]
