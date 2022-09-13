@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "easygrid"
-version = "0.4.0"
+version = "0.4.1"
 description = "Gym environment of simple microgrid simulation for Reinforcement Learning"
 authors = ["YANN BERTHELOT <yannberthelot1@gmail.com>"]
 readme = "README.md"
