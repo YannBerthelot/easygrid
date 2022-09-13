@@ -3,7 +3,7 @@ This module creates the gym environment wrapped arround the microgrid core
 """
 
 from abc import abstractmethod
-from typing import Tuple
+from typing import Tuple, Union
 
 import gym
 import numpy as np
@@ -11,8 +11,6 @@ from gym import spaces
 
 from easygrid.microgrid import Microgrid
 from easygrid.types import MicrogridConfig
-
-# from gym import spaces
 
 
 class GridEnv(gym.Env):
@@ -37,7 +35,7 @@ class GridEnv(gym.Env):
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, config: MicrogridConfig) -> None:
+    def __init__(self, config: Union[MicrogridConfig, dict]) -> None:
 
         """
         Creates the relevant attributes based on the config
@@ -46,7 +44,7 @@ class GridEnv(gym.Env):
             config (dict): Configuration for the underlying microgrid.
         """
         super().__init__()
-        self.microgrid = Microgrid(config)
+        self.microgrid = Microgrid(MicrogridConfig.parse_obj(config))
         self.observation_space = spaces.Box(
             low=self.microgrid.min_values,
             high=self.microgrid.max_values,
