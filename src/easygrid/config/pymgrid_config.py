@@ -1,20 +1,38 @@
 """
 'Realistic' config to be used for testing
 """
+import os
+
 import numpy as np
 
-from easygrid.config.realistic_config import grid_config
 from easygrid.data.data_utils import DATA_FOLDER, get_indexes, load_data
-from easygrid.types import BatteryConfig, LoadConfig, MicrogridConfig, PvConfig
+from easygrid.types import (
+    BatteryConfig,
+    GridConfig,
+    LoadConfig,
+    MicrogridConfig,
+    PvConfig,
+)
 
 INDEXES = get_indexes(DATA_FOLDER)
 LOAD = load_data(
     INDEXES["load"][3]
 )  # RefBldgPrimarySchoolNew2004_v1.3_7.1_2A_USA_TX_HOUSTON.csv
-PV = load_data(INDEXES["pv"][0])
 DURATION = 10
-CAPACITY = int(np.mean(LOAD) * DURATION)  # Houston_722430TYA.csv
-MAX_TIMESTEP = int(1e3)
+CAPACITY = int(np.mean(LOAD) * DURATION)
+MAX_TIMESTEP = 8760
+
+load_file = os.path.join(
+    os.path.join(DATA_FOLDER, "load"),
+    "RefBldgPrimarySchoolNew2004_v1.3_7.1_2A_USA_TX_HOUSTON.csv",
+)
+pv_file = os.path.join(os.path.join(DATA_FOLDER, "pv"), "Houston_722430TYA.csv")
+import_price_file = os.path.join(
+    os.path.join(DATA_FOLDER, "prices"), "import_prices_artificial.csv"
+)
+export_price_file = os.path.join(
+    os.path.join(DATA_FOLDER, "prices"), "export_prices_artificial.csv"
+)
 battery_config = BatteryConfig.parse_obj(
     {
         "capacity": CAPACITY,
@@ -29,13 +47,20 @@ battery_config = BatteryConfig.parse_obj(
 
 pv_config = PvConfig.parse_obj(
     {
-        "pv_production_ts": PV,
+        "pv_production_ts": pv_file,
+    }
+)
+
+grid_config = GridConfig.parse_obj(
+    {
+        "import_prices": import_price_file,
+        "export_prices": export_price_file,
     }
 )
 
 load_config = LoadConfig.parse_obj(
     {
-        "load_ts": LOAD,
+        "load_ts": load_file,
     }
 )
 

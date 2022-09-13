@@ -1,3 +1,22 @@
+
+<a id='changelog-0.3.0'></a>
+# 0.3.0 — 2022-09-13
+
+## Removed
+
+- Removed realistic config as it is deprecated towards pymgrid.
+
+## Added
+
+- Added basic price timseries in the data
+
+## Changed
+
+- Changed config of timeseries from np.array to path to csv files.
+
+## Fixed
+
+- Allow to properly save config in json format
 <a id='changelog-0.3.0'></a>
 
 # 0.3.0 — 2022-09-12

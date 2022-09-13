@@ -1,34 +1,10 @@
 """
 Type helpers for the project
 """
-from typing import Any, Optional
+from pathlib import Path
+from typing import Optional
 
-import numpy as np
 from pydantic import BaseModel
-
-JSON_ENCODERS = {np.ndarray: lambda arr: arr.tolist()}
-
-
-class NumpyNDArray(np.ndarray):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v: Any) -> np.ndarray:
-        # validate data...
-        if not isinstance(v, np.ndarray):
-            raise TypeError(f"numpy.ndarray required (currently {type(v)})")
-        return v
-
-
-# class Action(BaseModel):
-#     """
-#     This TypedDict represents the action template to be fed to the microgrid
-#     """
-
-#     battery: float
-#     grid: float
 
 
 class BatteryConfig(BaseModel):
@@ -52,13 +28,10 @@ class GridConfig(BaseModel):
         to the microgrid
     """
 
-    import_prices: NumpyNDArray
-    export_prices: NumpyNDArray
+    import_prices: Path
+    export_prices: Path
     import_price_factor: Optional[float] = 1.0
     export_price_factor: Optional[float] = 1.0
-
-    class Config:
-        json_encoders = JSON_ENCODERS
 
 
 class PvConfig(BaseModel):
@@ -68,11 +41,8 @@ class PvConfig(BaseModel):
     """
 
     # ts for timeserie
-    pv_production_ts: NumpyNDArray
+    pv_production_ts: Path
     production_factor: Optional[float] = 1.0
-
-    class Config:
-        json_encoders = JSON_ENCODERS
 
 
 class LoadConfig(BaseModel):
@@ -82,11 +52,8 @@ class LoadConfig(BaseModel):
     """
 
     # ts for timeserie
-    load_ts: NumpyNDArray
+    load_ts: Path
     load_factor: Optional[float] = 1.0
-
-    class Config:
-        json_encoders = JSON_ENCODERS
 
 
 class MicrogridConfig(BaseModel):
@@ -102,27 +69,3 @@ class MicrogridConfig(BaseModel):
     load: LoadConfig
     grid: GridConfig
     battery: BatteryConfig
-
-    class Config:
-        json_encoders = JSON_ENCODERS
-
-
-# def check_type(param: Any, param_name: str, types: tuple):
-#     """
-#     Assess right type for a given param or raise ValueError \
-#         with explicit explanation
-
-#     Args:
-#         param (Any): The value to check
-#         param_name (str): The name to associate to the value
-#         types (tuple): The acceptable types
-
-#     Raises:
-#         ValueError: Explanation of why the check failed
-#     """
-#     if not isinstance(param, types):
-#         raise ValueError(
-#             f"Parameter {param_name} ({param}) is \
-#                         not of float or int type, but \
-#                             {type(param)} type"
-#         )
