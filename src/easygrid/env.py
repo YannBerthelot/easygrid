@@ -3,7 +3,7 @@ This module creates the gym environment wrapped arround the microgrid core
 """
 
 from abc import abstractmethod
-from typing import Tuple, Union
+from typing import Dict, Tuple, Union
 
 import gym
 import numpy as np
@@ -57,6 +57,7 @@ class GridEnv(gym.Env):
             shape=(len(self.microgrid.max_actions),),
             dtype=np.float32,
         )
+        self.episode = 0
 
     @property
     def config(self) -> MicrogridConfig:
@@ -66,7 +67,9 @@ class GridEnv(gym.Env):
         """
         return self.microgrid.config
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, str]:
+    def step(
+        self, action: np.ndarray
+    ) -> Tuple[np.ndarray, float, bool, Dict[str, int]]:
         """
         Executes the action given by the agent (or something else) and \
         returns information about the state of the environment and reward
@@ -83,7 +86,7 @@ class GridEnv(gym.Env):
         """
         observation, done, costs = self.microgrid.run_timestep(action)
         reward = GridEnv.compute_reward(costs)
-        info = ""
+        info = {"episode": self.episode}
         return observation, reward, done, info
 
     def reset(self) -> np.ndarray:
@@ -93,6 +96,7 @@ class GridEnv(gym.Env):
         Raises:
             NotImplementedError: _description_
         """
+        self.episode += 1
         return self.microgrid.reset()
 
     def render(self, mode="human"):
