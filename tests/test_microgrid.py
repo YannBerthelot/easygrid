@@ -97,6 +97,12 @@ def test_microgrid():
     for file in ["faulty_load.csv", faulty_export, faulty_import, config_file_name]:
         os.remove(file)
 
+    # Test scaler
+    assert (
+        mg.scale_action(-1, mg.max_actions[0], mg.min_actions[0]) == mg.min_actions[0]
+    )
+    assert mg.scale_action(1, mg.max_actions[0], mg.min_actions[0]) == mg.max_actions[0]
+
 
 def test_battery():
     battery = Battery(battery_config)

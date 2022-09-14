@@ -50,9 +50,10 @@ class GridEnv(gym.Env):
             high=self.microgrid.max_values,
             dtype=np.float32,
         )
+        # Actions are normalized to -1,1 and scaled back in the microgrid
         self.action_space = spaces.Box(
-            low=self.microgrid.min_actions,
-            high=self.microgrid.max_actions,
+            low=-1,
+            high=1,
             dtype=np.float32,
         )
 

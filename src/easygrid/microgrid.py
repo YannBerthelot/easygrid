@@ -102,6 +102,20 @@ class Microgrid:
     def __len__(self):
         return min(self.load.__len__, self.pv.__len__, self.grid.__len__)
 
+    def scale_action(self, action: float, max_val, min_val) -> float:
+        """
+        Scale the action from [-1, 1] to the actual max min
+
+        Args:
+            action (float): The value of the action to scale in [-1, 1]
+            max_val (_type_): The max val of the corresponding action
+            min_val (_type_): The min val of the corresponding action
+
+        Returns:
+            float: The action scaled back to [min, max]
+        """
+        return ((action + 1) * 0.5 * (max_val - min_val)) + min_val
+
     def run_timestep(
         self, action: np.ndarray, logging: bool = True
     ) -> Tuple[np.ndarray, bool, Tuple[float, float, float]]:
@@ -123,8 +137,12 @@ class Microgrid:
         #     action_dict = {"battery": action[0], "grid": action[1]}
         #     action = Action.parse_obj(action_dict)
         self.t += 1
-        energy_battery = action[0]
-        energy_grid = action[1]
+        energy_battery = self.scale_action(
+            action[0], self.max_actions[0], self.min_actions[0]
+        )
+        energy_grid = self.scale_action(
+            action[1], self.max_actions[1], self.min_actions[1]
+        )
         energy_pv = self.pv.get_power(self.t) * self.delta_t
         energy_load = self.load.get_load(self.t) * self.delta_t
         energy_balance = energy_pv + energy_grid - energy_load - energy_battery
@@ -251,7 +269,8 @@ class Microgrid:
                 self.grid.export_prices[self.t + 1],
                 self.load.get_load(self.t + 1),
                 self.pv.get_power(self.t + 1),
-            ]
+            ],
+            dtype=np.float32,
         )
 
     @property
