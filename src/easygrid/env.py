@@ -54,6 +54,7 @@ class GridEnv(gym.Env):
         self.action_space = spaces.Box(
             low=-1,
             high=1,
+            shape=(len(self.microgrid.max_actions),),
             dtype=np.float32,
         )
 
