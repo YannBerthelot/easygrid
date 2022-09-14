@@ -81,7 +81,7 @@ class GridEnv(gym.Env):
                 - How much to sell/buy from the grid (float)
 
         Returns:
-            Tuple[np.ndarray, float, bool, NoneType]: The observation, reward,\
+            Tuple[np.ndarray, float, bool, Dict[str, int]]: The observation, reward,\
                 done and info following gym template
         """
         observation, done, costs = self.microgrid.run_timestep(action)
